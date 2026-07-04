@@ -10,41 +10,33 @@ import { useRouter } from "next/navigation";
 import { getImagePath } from "@/lib/services/tmdb";
 
 export default function ClientRows() {
-  const { user } = useAuthStore();
+  const { user, watchlist } = useAuthStore();
   const { openDetailModal } = useDetailModalStore();
   const router = useRouter();
 
-  const [watchlist, setWatchlist] = useState<MediaItem[]>([]);
   const [history, setHistory] = useState<any[]>([]);
   const [recommendations, setRecommendations] = useState<MediaItem[]>([]);
+
+  // Map to standard MediaItem structure
+  const watchlistItems = watchlist.map((w: any) => ({
+    id: w.mediaId,
+    title: w.title || "",
+    poster_path: w.posterPath || "",
+    backdrop_path: w.backdropPath || "",
+    media_type: w.mediaType as "movie" | "tv",
+    vote_average: 0,
+    genre_ids: [],
+    popularity: 0,
+    overview: "",
+  }));
 
   useEffect(() => {
     if (!user) return;
 
     async function loadClientData() {
       try {
-        // Fetch watchlist and watch history
-        const [watchRes, histRes] = await Promise.all([
-          fetch("/api/watchlist"),
-          fetch("/api/history"),
-        ]);
-
-        if (watchRes.ok) {
-          const data = await watchRes.json();
-          // Map to standard MediaItem structure
-          const items = data.watchlist.map((w: any) => ({
-            id: w.mediaId,
-            title: w.title,
-            poster_path: w.posterPath,
-            backdrop_path: w.backdropPath,
-            media_type: w.mediaType as "movie" | "tv",
-            vote_average: 0,
-            genre_ids: [],
-            popularity: 0,
-            overview: "",
-          }));
-          setWatchlist(items);
-        }
+        // Fetch watch history only
+        const histRes = await fetch("/api/history");
 
         if (histRes.ok) {
           const data = await histRes.json();
@@ -52,11 +44,6 @@ export default function ClientRows() {
           
           // Generate recommendations dynamically based on watched history genres/titles
           if (data.watchHistory.length > 0) {
-            const sampleId = data.watchHistory[0].mediaId;
-            const sampleType = data.watchHistory[0].mediaType;
-            const recsRes = await fetch(
-              `/api/watchlist` // placeholder or mock dynamic fetch
-            );
             // Dynamic recommendation fallback pool
             const sampleRecs = [
               {
@@ -172,8 +159,8 @@ export default function ClientRows() {
       )}
 
       {/* 2. My List Row */}
-      {watchlist && watchlist.length > 0 && (
-        <MovieRow title="My List" items={watchlist} />
+      {watchlistItems && watchlistItems.length > 0 && (
+        <MovieRow title="My List" items={watchlistItems} />
       )}
 
       {/* 3. Recommended Row */}

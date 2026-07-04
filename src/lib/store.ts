@@ -27,9 +27,25 @@ interface AuthModalState {
   setAuthView: (view: "login" | "signup") => void;
 }
 
+interface StoreMediaItem {
+  mediaId: string;
+  mediaType: string;
+  title?: string;
+  posterPath?: string;
+  backdropPath?: string;
+}
+
 interface AuthState {
   user: UserProfile | null;
+  watchlist: StoreMediaItem[];
+  favorites: StoreMediaItem[];
   setUser: (user: UserProfile | null) => void;
+  setWatchlist: (list: StoreMediaItem[]) => void;
+  setFavorites: (list: StoreMediaItem[]) => void;
+  addToWatchlist: (item: StoreMediaItem) => void;
+  removeFromWatchlist: (mediaId: string, mediaType: string) => void;
+  addToFavorites: (item: StoreMediaItem) => void;
+  removeFromFavorites: (mediaId: string, mediaType: string) => void;
   logout: () => void;
 }
 
@@ -51,14 +67,48 @@ export const useAuthModalStore = create<AuthModalState>((set) => ({
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
+  watchlist: [],
+  favorites: [],
   setUser: (user) => set({ user }),
+  setWatchlist: (watchlist) => set({ watchlist }),
+  setFavorites: (favorites) => set({ favorites }),
+  addToWatchlist: (item) =>
+    set((state) => ({
+      watchlist: [
+        ...state.watchlist.filter(
+          (w) => !(w.mediaId === item.mediaId && w.mediaType === item.mediaType)
+        ),
+        item,
+      ],
+    })),
+  removeFromWatchlist: (mediaId, mediaType) =>
+    set((state) => ({
+      watchlist: state.watchlist.filter(
+        (w) => !(w.mediaId === mediaId && w.mediaType === mediaType)
+      ),
+    })),
+  addToFavorites: (item) =>
+    set((state) => ({
+      favorites: [
+        ...state.favorites.filter(
+          (f) => !(f.mediaId === item.mediaId && f.mediaType === item.mediaType)
+        ),
+        item,
+      ],
+    })),
+  removeFromFavorites: (mediaId, mediaType) =>
+    set((state) => ({
+      favorites: state.favorites.filter(
+        (f) => !(f.mediaId === mediaId && f.mediaType === mediaType)
+      ),
+    })),
   logout: async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
-      set({ user: null });
+      set({ user: null, watchlist: [], favorites: [] });
       window.location.reload();
     } catch (e) {
-      console.error("Failed to log out", e);
+      console.error("Logout failed", e);
     }
   },
 }));

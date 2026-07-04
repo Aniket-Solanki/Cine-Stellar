@@ -18,7 +18,7 @@ const queryClient = new QueryClient({
 });
 
 export default function AppProviders({ children }: { children: React.ReactNode }) {
-  const { setUser } = useAuthStore();
+  const { setUser, setWatchlist, setFavorites } = useAuthStore();
 
   useEffect(() => {
     // Verify user login status immediately on client startup
@@ -28,13 +28,38 @@ export default function AppProviders({ children }: { children: React.ReactNode }
         if (response.ok) {
           const data = await response.json();
           setUser(data.user);
+
+          // Fetch user-specific lists in parallel to seed the global store
+          const [watchRes, favRes] = await Promise.all([
+            fetch("/api/watchlist"),
+            fetch("/api/favorites"),
+          ]);
+
+          if (watchRes.ok) {
+            const watchData = await watchRes.json();
+            setWatchlist(watchData.watchlist.map((w: any) => ({
+              mediaId: String(w.mediaId),
+              mediaType: w.mediaType,
+              title: w.title,
+              posterPath: w.posterPath,
+              backdropPath: w.backdropPath,
+            })));
+          }
+
+          if (favRes.ok) {
+            const favData = await favRes.json();
+            setFavorites(favData.favorites.map((f: any) => ({
+              mediaId: String(f.mediaId),
+              mediaType: f.mediaType,
+            })));
+          }
         }
       } catch (err) {
         console.error("Failed to load user session", err);
       }
     }
     loadSession();
-  }, [setUser]);
+  }, [setUser, setWatchlist, setFavorites]);
 
   return (
     <QueryClientProvider client={queryClient}>

@@ -27,32 +27,15 @@ export default function MovieCard({
 }: MovieCardProps) {
   const router = useRouter();
   const { openDetailModal } = useDetailModalStore();
-  const { user } = useAuthStore();
+  const { user, watchlist, addToWatchlist, removeFromWatchlist } = useAuthStore();
   const { openAuthModal } = useAuthModalStore();
 
   const [isHovered, setIsHovered] = useState(false);
-  const [inWatchlist, setInWatchlist] = useState(false);
   const [loadingWatchlist, setLoadingWatchlist] = useState(false);
 
-  // Check if item is in watchlist (simulated or API checking)
-  React.useEffect(() => {
-    if (!user) return;
-    async function checkWatchlist() {
-      try {
-        const res = await fetch("/api/watchlist");
-        if (res.ok) {
-          const data = await res.json();
-          const exists = data.watchlist.some(
-            (item: any) => item.mediaId === String(id) && item.mediaType === mediaType
-          );
-          setInWatchlist(exists);
-        }
-      } catch (e) {
-        console.error("Watchlist check failed", e);
-      }
-    }
-    checkWatchlist();
-  }, [id, mediaType, user]);
+  const inWatchlist = watchlist.some(
+    (w) => w.mediaId === String(id) && w.mediaType === mediaType
+  );
 
   const handleWatchlistToggle = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -84,7 +67,17 @@ export default function MovieCard({
       });
 
       if (res.ok) {
-        setInWatchlist(!inWatchlist);
+        if (inWatchlist) {
+          removeFromWatchlist(String(id), mediaType);
+        } else {
+          addToWatchlist({ 
+            mediaId: String(id), 
+            mediaType,
+            title,
+            posterPath: posterPath || undefined,
+            backdropPath: backdropPath || undefined
+          });
+        }
       }
     } catch (err) {
       console.error("Watchlist edit failed", err);

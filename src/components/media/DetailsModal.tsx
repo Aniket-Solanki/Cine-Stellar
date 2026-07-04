@@ -14,7 +14,15 @@ import { Skeleton } from "../ui/skeleton";
 export default function DetailsModal() {
   const router = useRouter();
   const { isOpen, mediaId, mediaType, closeDetailModal } = useDetailModalStore();
-  const { user } = useAuthStore();
+  const { 
+    user, 
+    watchlist, 
+    favorites, 
+    addToWatchlist, 
+    removeFromWatchlist, 
+    addToFavorites, 
+    removeFromFavorites 
+  } = useAuthStore();
   const { openAuthModal } = useAuthModalStore();
 
   const [loading, setLoading] = useState(true);
@@ -24,12 +32,13 @@ export default function DetailsModal() {
   const [videos, setVideos] = useState<Video[]>([]);
   const [recommendations, setRecommendations] = useState<MediaItem[]>([]);
 
-  const [inWatchlist, setInWatchlist] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false);
   const [loadingWatchlist, setLoadingWatchlist] = useState(false);
   const [loadingFavorite, setLoadingFavorite] = useState(false);
   const [playTrailer, setPlayTrailer] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+
+  const inWatchlist = mediaId ? watchlist.some((item) => String(item.mediaId) === String(mediaId)) : false;
+  const isFavorite = mediaId ? favorites.some((item) => String(item.mediaId) === String(mediaId)) : false;
 
   // Fetch all required data once modal opens
   useEffect(() => {
@@ -62,32 +71,7 @@ export default function DetailsModal() {
     loadData();
   }, [isOpen, mediaId, mediaType]);
 
-  // Check Watchlist & Favorite Status
-  useEffect(() => {
-    if (!user || !mediaId || !isOpen) return;
 
-    async function checkStatuses() {
-      try {
-        const [watchRes, favRes] = await Promise.all([
-          fetch("/api/watchlist"),
-          fetch("/api/favorites"),
-        ]);
-
-        if (watchRes.ok) {
-          const data = await watchRes.json();
-          setInWatchlist(data.watchlist.some((item: any) => item.mediaId === String(mediaId)));
-        }
-        if (favRes.ok) {
-          const data = await favRes.json();
-          setIsFavorite(data.favorites.some((item: any) => item.mediaId === String(mediaId)));
-        }
-      } catch (err) {
-        console.error("Failed to fetch interaction statuses", err);
-      }
-    }
-
-    checkStatuses();
-  }, [mediaId, user, isOpen]);
 
   const handleWatchlistToggle = async () => {
     if (!user) {
@@ -116,7 +100,19 @@ export default function DetailsModal() {
         headers: { "Content-Type": "application/json" },
         body,
       });
-      if (res.ok) setInWatchlist(!inWatchlist);
+      if (res.ok) {
+        if (inWatchlist) {
+          removeFromWatchlist(String(mediaId), mediaType || "movie");
+        } else {
+          addToWatchlist({ 
+            mediaId: String(mediaId), 
+            mediaType: mediaType || "movie",
+            title: details?.title || details?.name,
+            posterPath: details?.poster_path,
+            backdropPath: details?.backdrop_path,
+          });
+        }
+      }
     } catch (e) {
       console.error(e);
     } finally {
@@ -151,7 +147,13 @@ export default function DetailsModal() {
         headers: { "Content-Type": "application/json" },
         body,
       });
-      if (res.ok) setIsFavorite(!isFavorite);
+      if (res.ok) {
+        if (isFavorite) {
+          removeFromFavorites(String(mediaId), mediaType || "movie");
+        } else {
+          addToFavorites({ mediaId: String(mediaId), mediaType: mediaType || "movie" });
+        }
+      }
     } catch (e) {
       console.error(e);
     } finally {
