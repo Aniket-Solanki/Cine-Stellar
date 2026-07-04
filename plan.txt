@@ -1,0 +1,630 @@
+Create a premium-grade OTT streaming platform comparable to Netflix, Disney+, Prime Video, and Apple TV+.
+
+The project must be production-ready, scalable, fully responsive, optimized, and deployable on Vercel.
+
+The entire project must use modern best practices.
+
+------------------------------------------------
+TECH STACK
+------------------------------------------------
+
+Frontend
+
+• Next.js 15 (App Router)
+• React 19
+• TypeScript
+• TailwindCSS
+• Framer Motion
+• GSAP where appropriate
+• shadcn/ui
+• Lucide Icons
+• React Query
+• Zustand
+
+Backend
+
+• Next.js API Routes
+• Prisma ORM
+• PostgreSQL (Neon or Supabase)
+• NextAuth/Auth.js
+
+Deployment
+
+• Vercel
+• Environment variables
+• Edge Runtime wherever possible
+
+------------------------------------------------
+AUTHENTICATION
+------------------------------------------------
+
+Implement:
+
+• Email Login
+• Email Signup
+• Google OAuth Login
+• Session Management
+• Remember Me
+• Protected Routes
+• User Profile
+
+Every user should have:
+
+• Watch History
+• Continue Watching
+• Favorites
+• Watchlist
+• Recently Viewed
+• Preferred Language
+• Theme
+• Avatar
+
+------------------------------------------------
+DESIGN
+------------------------------------------------
+
+The UI must look more premium than Netflix.
+
+Requirements:
+
+Dark cinematic theme
+
+Glassmorphism
+
+Smooth gradients
+
+Aurora effects
+
+Blur panels
+
+Large cinematic banners
+
+Rounded corners
+
+Micro interactions
+
+Parallax scrolling
+
+Motion blur transitions
+
+Hover scaling
+
+Hero background videos
+
+Floating navbar
+
+Animated search
+
+Animated cards
+
+Custom loading animations
+
+Skeleton loaders
+
+Page transitions
+
+Ultra smooth 60fps animations
+
+No lag.
+
+------------------------------------------------
+HOME PAGE
+------------------------------------------------
+
+Hero Banner
+
+Featured Movie
+
+Trending Now
+
+Popular Movies
+
+Popular TV Shows
+
+New Releases
+
+Top Rated
+
+Action
+
+Comedy
+
+Drama
+
+Sci-Fi
+
+Anime
+
+Crime
+
+Family
+
+Kids
+
+Horror
+
+Mystery
+
+Romance
+
+Documentary
+
+Trending Today
+
+Trending This Week
+
+Continue Watching
+
+Recently Watched
+
+Recommended For You
+
+Because You Watched...
+
+Popular Actors
+
+Collections
+
+Studios
+
+------------------------------------------------
+TMDB
+------------------------------------------------
+
+Integrate TMDB API.
+
+Automatically fetch:
+
+Movies
+
+TV Shows
+
+Genres
+
+Images
+
+Backdrops
+
+Logos
+
+Trailers
+
+Cast
+
+Crew
+
+Reviews
+
+Recommendations
+
+Trending
+
+Top Rated
+
+Popular
+
+Upcoming
+
+Airing Today
+
+On The Air
+
+Search
+
+Use caching.
+
+Automatic refresh.
+
+Infinite scrolling.
+
+------------------------------------------------
+PLAYER
+------------------------------------------------
+
+Video player must support VidKing embed URLs.
+
+Embed player dynamically.
+
+Player features:
+
+Auto fullscreen option
+
+Subtitle selector
+
+Quality selector
+
+Episode selector
+
+Season selector
+
+Skip intro button
+
+Continue watching
+
+Playback position saving
+
+Next episode autoplay
+
+Previous episode
+
+Picture in Picture
+
+Keyboard shortcuts
+
+Theater mode
+
+Cinema mode
+
+Fullscreen
+
+Loading animation
+
+Error fallback
+
+Responsive player
+
+The player page should resemble Netflix.
+
+------------------------------------------------
+SEARCH
+------------------------------------------------
+
+Global search.
+
+Instant results.
+
+Search movies
+
+TV
+
+Actors
+
+Collections
+
+Studios
+
+Genres
+
+History
+
+Trending searches
+
+------------------------------------------------
+DISCOVER
+------------------------------------------------
+
+Advanced filters.
+
+Genre
+
+Language
+
+Year
+
+Country
+
+Rating
+
+Runtime
+
+Popularity
+
+Release date
+
+Streaming type
+
+------------------------------------------------
+DETAIL PAGE
+------------------------------------------------
+
+Large backdrop
+
+Poster
+
+Title
+
+Tagline
+
+Overview
+
+Runtime
+
+Genres
+
+Language
+
+Status
+
+Release date
+
+Budget
+
+Revenue
+
+Cast carousel
+
+Crew
+
+Reviews
+
+Recommendations
+
+Related titles
+
+Trailer
+
+Play button
+
+Favorite button
+
+Watchlist button
+
+Share
+
+------------------------------------------------
+USER FEATURES
+------------------------------------------------
+
+Watchlist
+
+Favorites
+
+Continue Watching
+
+History
+
+Liked titles
+
+Ratings
+
+Profile settings
+
+Notifications
+
+Theme
+
+------------------------------------------------
+ADMIN
+------------------------------------------------
+
+Simple admin dashboard.
+
+Dashboard
+
+Users
+
+Analytics
+
+Featured Banner
+
+Homepage Sections
+
+Announcements
+
+Content moderation
+
+------------------------------------------------
+PERFORMANCE
+------------------------------------------------
+
+Lazy loading
+
+Code splitting
+
+Image optimization
+
+Prefetching
+
+Caching
+
+SEO
+
+SSR
+
+Streaming
+
+Edge rendering
+
+Metadata
+
+Sitemap
+
+Robots
+
+Manifest
+
+PWA
+
+Offline support
+
+------------------------------------------------
+ACCESSIBILITY
+------------------------------------------------
+
+Keyboard navigation
+
+ARIA
+
+Focus management
+
+Reduced motion support
+
+Color contrast
+
+------------------------------------------------
+ANIMATIONS
+------------------------------------------------
+
+Framer Motion everywhere.
+
+Animated:
+
+Cards
+
+Navbar
+
+Drawer
+
+Hero
+
+Sections
+
+Search
+
+Buttons
+
+Images
+
+Transitions
+
+Page loading
+
+Scroll animations
+
+Hover effects
+
+Modals
+
+Use premium easing.
+
+Everything should feel fluid.
+
+------------------------------------------------
+SELF SUSTAINING
+------------------------------------------------
+
+The application should automatically:
+
+Fetch latest TMDB data
+
+Refresh trending content
+
+Cache responses
+
+Handle API failures
+
+Retry requests
+
+Generate recommendations
+
+Maintain user history
+
+Store preferences
+
+Persist sessions
+
+No manual updates required.
+
+------------------------------------------------
+RECOMMENDATION ENGINE
+------------------------------------------------
+
+Generate recommendations using:
+
+TMDB recommendations
+
+Genres
+
+Popularity
+
+Watch history
+
+Favorites
+
+Continue watching
+
+Recently viewed
+
+------------------------------------------------
+API STRUCTURE
+------------------------------------------------
+
+Create reusable services.
+
+TMDB Service
+
+Player Service
+
+Authentication Service
+
+Recommendation Service
+
+User Service
+
+History Service
+
+Watchlist Service
+
+------------------------------------------------
+PROJECT STRUCTURE
+------------------------------------------------
+
+Professional folder architecture.
+
+Reusable components.
+
+Reusable hooks.
+
+Reusable utilities.
+
+Clean code.
+
+No duplicated logic.
+
+------------------------------------------------
+SECURITY
+------------------------------------------------
+
+Rate limiting
+
+CSRF protection
+
+Secure cookies
+
+JWT
+
+Input validation
+
+Sanitization
+
+Protected API routes
+
+------------------------------------------------
+FINAL OUTPUT
+------------------------------------------------
+
+Generate:
+
+Complete project
+
+Reusable components
+
+Production-ready architecture
+
+Environment variables example
+
+README
+
+Installation guide
+
+Deployment guide for Vercel
+
+Database schema
+
+Prisma schema
+
+API documentation
+
+Folder structure
+
+No placeholder pages.
+
+Everything should work.
+
+No mock UI.
+
+No TODO comments.
+
+No incomplete features.
+
+The result should feel like a premium OTT streaming platform that could realistically compete with Netflix in terms of design quality and user experience.

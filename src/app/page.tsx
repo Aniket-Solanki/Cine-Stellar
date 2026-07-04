@@ -1,103 +1,94 @@
-import Image from "next/image";
+// Main Cine-Stellar Home Page rendering the cinematic Hero Banner and multiple categories of media cards.
+import React from "react";
+import HeroBanner from "@/components/media/HeroBanner";
+import MovieRow from "@/components/media/MovieRow";
+import { tmdbService } from "@/lib/services/tmdb";
+import ClientRows from "@/components/media/ClientRows";
 
-export default function Home() {
+export const revalidate = 3600; // Revalidate page cache every hour (ISR)
+
+export default async function HomePage() {
+  // SSR fetch queries
+  let trending: any[] = [];
+  let popularMovies: any[] = [];
+  let popularShows: any[] = [];
+  let topRated: any[] = [];
+  let upcoming: any[] = [];
+  
+  // Genres list
+  let actionMovies: any[] = [];
+  let comedyMovies: any[] = [];
+  let sciFiMovies: any[] = [];
+  let horrorMovies: any[] = [];
+
+  try {
+    const [trendRes, popMovRes, popTvRes, topRes, upRes, actRes, comRes, sciRes, horRes] = await Promise.all([
+      tmdbService.getTrending("all", "week"),
+      tmdbService.getPopular("movie"),
+      tmdbService.getPopular("tv"),
+      tmdbService.getTopRated("movie"),
+      tmdbService.getUpcoming(),
+      tmdbService.discover("movie", { with_genres: "28" }), // Action
+      tmdbService.discover("movie", { with_genres: "35" }), // Comedy
+      tmdbService.discover("movie", { with_genres: "878" }), // Sci-Fi
+      tmdbService.discover("movie", { with_genres: "27" }), // Horror
+    ]);
+
+    trending = trendRes;
+    popularMovies = popMovRes;
+    popularShows = popTvRes;
+    topRated = topRes;
+    upcoming = upRes;
+    actionMovies = actRes.results;
+    comedyMovies = comRes.results;
+    sciFiMovies = sciRes.results;
+    horrorMovies = horRes.results;
+  } catch (err) {
+    console.error("Home page SSR fetch failed", err);
+  }
+
+  // Pick the first popular movie or trending item as featured hero content
+  const featured = popularMovies[0] || trending[0] || {
+    id: "27205",
+    title: "Inception",
+    overview: "Cobb, a skilled thief who commits corporate espionage by infiltrating the subconscious of his targets, is offered a chance to regain his old life as payment for a task considered to be impossible: \"inception\", the implantation of another person's idea into a target's subconscious.",
+    backdrop_path: "/8ZgRnsn52C6z4amC59TTzsCj5u.jpg",
+    poster_path: "/o0solCr486IHI7Rg2u4hQ1yYrDO.jpg",
+    media_type: "movie",
+    genre_ids: [28, 878, 12],
+    vote_average: 8.4,
+    tagline: "Your mind is the scene of the crime.",
+  };
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="relative pb-24 w-full flex flex-col bg-zinc-950 overflow-hidden">
+      {/* Aurora glow ambient background shapes */}
+      <div className="aurora-bg">
+        <div className="aurora-glow-1" />
+        <div className="aurora-glow-2" />
+      </div>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      {/* Cinematic Header Video / Image Banner */}
+      <HeroBanner featured={featured} />
+
+      {/* Media Slider lanes */}
+      <div className="relative z-20 space-y-2.5 -mt-16 sm:-mt-24 md:-mt-32">
+        {/* Dynamic client-specific personalized rows: Watchlist, History */}
+        <ClientRows />
+
+        {/* Live TMDB media categories */}
+        <MovieRow title="Trending Now" items={trending} />
+        <MovieRow title="Popular Movies" items={popularMovies} />
+        <MovieRow title="Popular TV Shows" items={popularShows} />
+        <MovieRow title="Upcoming Releases" items={upcoming} />
+        <MovieRow title="Critically Acclaimed" items={topRated} />
+        
+        {/* Genre specific slider lanes */}
+        <MovieRow title="Adrenaline Fuelled Action" items={actionMovies} />
+        <MovieRow title="Laugh Out Loud Comedies" items={comedyMovies} />
+        <MovieRow title="Mind Bending Sci-Fi" items={sciFiMovies} />
+        <MovieRow title="Bone Chilling Horror" items={horrorMovies} />
+      </div>
     </div>
   );
 }
