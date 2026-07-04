@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/firebase";
-import { collection, getDocs, doc, setDoc, deleteDoc, query, orderBy } from "firebase/firestore";
+import { db } from "@/lib/firebase-admin";
 import { getCurrentUser } from "@/lib/auth-utils";
 
 export async function GET() {
@@ -10,12 +9,13 @@ export async function GET() {
   }
 
   try {
-    const q = query(
-      collection(db, "users", user.id, "watchlist"),
-      orderBy("createdAt", "desc")
-    );
-    const querySnapshot = await getDocs(q);
-    const watchlist = querySnapshot.docs.map((docSnap) => docSnap.data());
+    const querySnapshot = await db
+      .collection("users")
+      .doc(user.id)
+      .collection("watchlist")
+      .orderBy("createdAt", "desc")
+      .get();
+    const watchlist = querySnapshot.docs.map((docSnap: any) => docSnap.data());
 
     return NextResponse.json({ watchlist });
   } catch (error) {
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     }
 
     const docId = `${mediaType}_${mediaId}`;
-    const docRef = doc(db, "users", user.id, "watchlist", docId);
+    const docRef = db.collection("users").doc(user.id).collection("watchlist").doc(docId);
 
     const watchlistItem = {
       userId: user.id,
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
       createdAt: new Date().toISOString(),
     };
 
-    await setDoc(docRef, watchlistItem);
+    await docRef.set(watchlistItem);
 
     return NextResponse.json({ message: "Added to watchlist", item: watchlistItem });
   } catch (error) {
@@ -75,8 +75,8 @@ export async function DELETE(request: NextRequest) {
     }
 
     const docId = `${mediaType}_${mediaId}`;
-    const docRef = doc(db, "users", user.id, "watchlist", docId);
-    await deleteDoc(docRef);
+    const docRef = db.collection("users").doc(user.id).collection("watchlist").doc(docId);
+    await docRef.delete();
 
     return NextResponse.json({ message: "Removed from watchlist" });
   } catch (error) {

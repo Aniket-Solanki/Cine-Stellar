@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/firebase";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase-admin";
 import { setSessionCookie } from "@/lib/auth-utils";
 
 export async function POST(request: NextRequest) {
@@ -11,13 +10,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // Check if user document exists in Firestore
-    const userRef = doc(db, "users", uid);
-    const userSnap = await getDoc(userRef);
+    // Check if user document exists in Firestore using Admin SDK
+    const userRef = db.collection("users").doc(uid);
+    const userSnap = await userRef.get();
 
     let userData: any;
 
-    if (!userSnap.exists()) {
+    if (!userSnap.exists) {
       userData = {
         id: uid,
         email,
@@ -28,7 +27,7 @@ export async function POST(request: NextRequest) {
         theme: "dark",
         createdAt: new Date().toISOString(),
       };
-      await setDoc(userRef, userData);
+      await userRef.set(userData);
     } else {
       userData = userSnap.data();
     }

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/firebase";
-import { collection, getDocs, doc, setDoc, query, orderBy } from "firebase/firestore";
+import { db } from "@/lib/firebase-admin";
 import { getCurrentUser } from "@/lib/auth-utils";
 
 export async function GET() {
@@ -10,12 +9,13 @@ export async function GET() {
   }
 
   try {
-    const q = query(
-      collection(db, "users", user.id, "history"),
-      orderBy("lastWatched", "desc")
-    );
-    const querySnapshot = await getDocs(q);
-    const watchHistory = querySnapshot.docs.map((docSnap) => docSnap.data());
+    const querySnapshot = await db
+      .collection("users")
+      .doc(user.id)
+      .collection("history")
+      .orderBy("lastWatched", "desc")
+      .get();
+    const watchHistory = querySnapshot.docs.map((docSnap: any) => docSnap.data());
 
     return NextResponse.json({ watchHistory });
   } catch (error) {
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     }
 
     const docId = `${mediaType}_${mediaId}`;
-    const docRef = doc(db, "users", user.id, "history", docId);
+    const docRef = db.collection("users").doc(user.id).collection("history").doc(docId);
 
     const historyItem = {
       userId: user.id,
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
       lastWatched: new Date().toISOString(),
     };
 
-    await setDoc(docRef, historyItem);
+    await docRef.set(historyItem);
 
     return NextResponse.json({ message: "Playback progress saved", item: historyItem });
   } catch (error) {

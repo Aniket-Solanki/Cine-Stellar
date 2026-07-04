@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/firebase";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase-admin";
 import { getCurrentUser } from "@/lib/auth-utils";
 
 export async function GET(request: NextRequest) {
@@ -19,11 +18,11 @@ export async function GET(request: NextRequest) {
 
   try {
     const docId = `${mediaType}_${mediaId}`;
-    const docRef = doc(db, "users", user.id, "ratings", docId);
-    const docSnap = await getDoc(docRef);
+    const docRef = db.collection("users").doc(user.id).collection("ratings").doc(docId);
+    const docSnap = await docRef.get();
 
-    if (docSnap.exists()) {
-      return NextResponse.json({ rating: docSnap.data().rating });
+    if (docSnap.exists) {
+      return NextResponse.json({ rating: docSnap.data()?.rating });
     }
 
     return NextResponse.json({ rating: null });
@@ -47,7 +46,7 @@ export async function POST(request: NextRequest) {
     }
 
     const docId = `${mediaType}_${mediaId}`;
-    const docRef = doc(db, "users", user.id, "ratings", docId);
+    const docRef = db.collection("users").doc(user.id).collection("ratings").doc(docId);
 
     const ratingItem = {
       userId: user.id,
@@ -57,7 +56,7 @@ export async function POST(request: NextRequest) {
       updatedAt: new Date().toISOString(),
     };
 
-    await setDoc(docRef, ratingItem);
+    await docRef.set(ratingItem);
 
     return NextResponse.json({ message: "Rating submitted successfully", rating: ratingItem });
   } catch (error) {

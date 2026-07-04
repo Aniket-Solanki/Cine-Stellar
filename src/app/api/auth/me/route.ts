@@ -1,7 +1,5 @@
-// API Route handler for retrieving/updating current user context.
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/firebase";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase-admin";
 import { getCurrentUser, hashPassword } from "@/lib/auth-utils";
 
 // Get current user details
@@ -33,11 +31,11 @@ export async function PUT(request: NextRequest) {
       updateData.password = await hashPassword(newPassword);
     }
 
-    const userRef = doc(db, "users", user.id);
-    await setDoc(userRef, updateData, { merge: true });
+    const userRef = db.collection("users").doc(user.id);
+    await userRef.set(updateData, { merge: true });
 
     // Fetch the updated user profile from Firestore to return
-    const userSnap = await getDoc(userRef);
+    const userSnap = await userRef.get();
     const updatedUser = userSnap.data();
 
     return NextResponse.json({

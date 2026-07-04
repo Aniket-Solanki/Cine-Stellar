@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/firebase";
-import { collection, getDocs, doc, setDoc, deleteDoc, query, orderBy } from "firebase/firestore";
+import { db } from "@/lib/firebase-admin";
 import { getCurrentUser } from "@/lib/auth-utils";
 
 export async function GET() {
@@ -10,12 +9,13 @@ export async function GET() {
   }
 
   try {
-    const q = query(
-      collection(db, "users", user.id, "favorites"),
-      orderBy("createdAt", "desc")
-    );
-    const querySnapshot = await getDocs(q);
-    const favorites = querySnapshot.docs.map((docSnap) => docSnap.data());
+    const querySnapshot = await db
+      .collection("users")
+      .doc(user.id)
+      .collection("favorites")
+      .orderBy("createdAt", "desc")
+      .get();
+    const favorites = querySnapshot.docs.map((docSnap: any) => docSnap.data());
 
     return NextResponse.json({ favorites });
   } catch (error) {
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     }
 
     const docId = `${mediaType}_${mediaId}`;
-    const docRef = doc(db, "users", user.id, "favorites", docId);
+    const docRef = db.collection("users").doc(user.id).collection("favorites").doc(docId);
 
     const favoriteItem = {
       userId: user.id,
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
       createdAt: new Date().toISOString(),
     };
 
-    await setDoc(docRef, favoriteItem);
+    await docRef.set(favoriteItem);
 
     return NextResponse.json({ message: "Added to favorites", item: favoriteItem });
   } catch (error) {
@@ -75,8 +75,8 @@ export async function DELETE(request: NextRequest) {
     }
 
     const docId = `${mediaType}_${mediaId}`;
-    const docRef = doc(db, "users", user.id, "favorites", docId);
-    await deleteDoc(docRef);
+    const docRef = db.collection("users").doc(user.id).collection("favorites").doc(docId);
+    await docRef.delete();
 
     return NextResponse.json({ message: "Removed from favorites" });
   } catch (error) {

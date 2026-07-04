@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/firebase";
-import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
+import { db } from "@/lib/firebase-admin";
 import { getCurrentUser } from "@/lib/auth-utils";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { tmdbService } from "@/lib/services/tmdb";
@@ -13,13 +12,14 @@ export async function GET(request: NextRequest) {
   let watchHistoryList: string[] = [];
   if (user) {
     try {
-      const q = query(
-        collection(db, "users", user.id, "history"),
-        orderBy("lastWatched", "desc"),
-        limit(5)
-      );
-      const querySnapshot = await getDocs(q);
-      const history = querySnapshot.docs.map((docSnap) => docSnap.data());
+      const querySnapshot = await db
+        .collection("users")
+        .doc(user.id)
+        .collection("history")
+        .orderBy("lastWatched", "desc")
+        .limit(5)
+        .get();
+      const history = querySnapshot.docs.map((docSnap: any) => docSnap.data());
       watchHistoryList = history.map((h: any) => `${h.title} (${h.mediaType})`);
     } catch (e) {
       console.warn("Could not query watch history:", e);

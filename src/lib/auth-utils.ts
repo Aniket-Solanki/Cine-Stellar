@@ -2,8 +2,7 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
-import { db } from "./firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { db } from "./firebase-admin";
 
 const JWT_SECRET = process.env.JWT_SECRET || "cine_stellar_jwt_secret_key_ultra_premium_2026";
 const COOKIE_NAME = "cinestellar_session";
@@ -68,11 +67,11 @@ export async function getCurrentUser() {
     const decoded = verifyToken(token);
     if (!decoded) return null;
 
-    // Fetch user document from Firestore
-    const userRef = doc(db, "users", decoded.userId);
-    const userSnap = await getDoc(userRef);
+    // Fetch user document from Firestore using Admin SDK
+    const userRef = db.collection("users").doc(decoded.userId);
+    const userSnap = await userRef.get();
 
-    if (!userSnap.exists()) {
+    if (!userSnap.exists) {
       return null;
     }
 
