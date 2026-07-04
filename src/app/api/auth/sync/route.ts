@@ -44,8 +44,12 @@ export async function POST(request: NextRequest) {
       success: true,
       user: userData,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Firestore user sync error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json({
+      error: "Internal Server Error",
+      details: error.message || String(error),
+      stack: error.stack || ""
+    }, { status: 500 });
   }
 }

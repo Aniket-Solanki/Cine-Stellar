@@ -56,7 +56,7 @@ export default function AuthModal() {
 
       if (!syncRes.ok) {
         const syncData = await syncRes.json();
-        throw new Error(syncData.error || "Session synchronization failed.");
+        throw new Error(syncData.details || syncData.error || "Session synchronization failed.");
       }
 
       const syncData = await syncRes.json();
@@ -110,7 +110,7 @@ export default function AuthModal() {
 
       if (!syncRes.ok) {
         const syncData = await syncRes.json();
-        throw new Error(syncData.error || "Session synchronization failed.");
+        throw new Error(syncData.details || syncData.error || "Session synchronization failed.");
       }
 
       const syncData = await syncRes.json();
