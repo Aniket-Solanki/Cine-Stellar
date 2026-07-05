@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// In-memory cache to store TMDB ID to IMDb Amazon CDN URL mappings
-const posterCache = new Map<string, string>();
+// In-memory LRU-style cache to store TMDB ID → IMDb enrichment data
+const enrichmentCache = new Map<string, { url: string; imdbId: string; rating?: number; voteCount?: number; imdbUrl?: string }>();
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY || "8088221e5df33c3fa7b69dc0c2219d36";
 
@@ -11,83 +11,91 @@ export async function GET(request: NextRequest) {
   const type = searchParams.get("type") || "movie";
   const title = searchParams.get("title") || "";
   const fallback = searchParams.get("fallback") || "";
+  const mode = searchParams.get("mode") || "redirect"; // "redirect" for img src, "json" for enrichment data
 
   if (!id) {
+    if (mode === "json") return NextResponse.json({ error: "no id" }, { status: 400 });
     return handleFallback(fallback);
   }
 
   const cacheKey = `${type}_${id}`;
-  if (posterCache.has(cacheKey)) {
-    return NextResponse.redirect(posterCache.get(cacheKey)!, { status: 307 });
+  const cached = enrichmentCache.get(cacheKey);
+  
+  if (cached) {
+    if (mode === "json") {
+      return NextResponse.json({ imdbId: cached.imdbId, imdbUrl: cached.imdbUrl, rating: cached.rating, voteCount: cached.voteCount, posterUrl: cached.url });
+    }
+    return NextResponse.redirect(cached.url, { status: 307 });
   }
 
   try {
     let imdbId = "";
 
-    // 1. Get IMDb ID from TMDB
-    if (type === "movie") {
-      const tmdbUrl = `https://api.themoviedb.org/3/movie/${id}?api_key=${TMDB_API_KEY}`;
-      const res = await fetch(tmdbUrl);
-      if (res.ok) {
-        const data = await res.json();
-        imdbId = data.imdb_id || "";
-      }
-    } else {
-      const tmdbUrl = `https://api.themoviedb.org/3/tv/${id}/external_ids?api_key=${TMDB_API_KEY}`;
-      const res = await fetch(tmdbUrl);
-      if (res.ok) {
-        const data = await res.json();
-        imdbId = data.imdb_id || "";
-      }
+    // 1. Resolve IMDb ID from TMDB
+    const tmdbEndpoint = type === "movie"
+      ? `https://api.themoviedb.org/3/movie/${id}?api_key=${TMDB_API_KEY}`
+      : `https://api.themoviedb.org/3/tv/${id}/external_ids?api_key=${TMDB_API_KEY}`;
+
+    const tmdbRes = await fetch(tmdbEndpoint);
+    if (tmdbRes.ok) {
+      const tmdbData = await tmdbRes.json();
+      imdbId = tmdbData.imdb_id || "";
     }
 
     let resolvedPoster = "";
+    let rating: number | undefined;
+    let voteCount: number | undefined;
+    let imdbUrl: string | undefined;
 
-    // 2. Fetch from imdbapi.dev if IMDb ID exists
+    // 2. Fetch from imdbapi.dev using IMDb ID
     if (imdbId) {
-      const imdbUrl = `https://api.imdbapi.dev/titles/${imdbId}`;
-      const res = await fetch(imdbUrl);
-      if (res.ok) {
-        const data = await res.json();
-        resolvedPoster = data.primaryImage?.url || "";
+      const imdbRes = await fetch(`https://api.imdbapi.dev/titles/${imdbId}`);
+      if (imdbRes.ok) {
+        const imdbData = await imdbRes.json();
+        resolvedPoster = imdbData.primaryImage?.url || "";
+        rating = imdbData.rating?.aggregateRating;
+        voteCount = imdbData.rating?.voteCount;
+        imdbUrl = `https://www.imdb.com/title/${imdbId}/`;
       }
     }
 
-    // 3. Fallback: Search imdbapi.dev by title if details failed
-    if (!resolvedPoster && title) {
-      const searchUrl = `https://api.imdbapi.dev/search/titles?query=${encodeURIComponent(title)}&limit=3`;
-      const res = await fetch(searchUrl);
-      if (res.ok) {
-        const data = await res.json();
-        const results = data.results || [];
-        const match = results.find(
-          (r: any) => r.type === (type === "movie" ? "movie" : "tvSeries")
-        ) || results[0];
-        
-        resolvedPoster = match?.primaryImage?.url || "";
-      }
+    // 3. Store in cache regardless
+    const entry = {
+      url: resolvedPoster || buildTmdbFallback(fallback),
+      imdbId,
+      rating,
+      voteCount,
+      imdbUrl,
+    };
+    
+    // Limit cache to 500 entries
+    if (enrichmentCache.size >= 500) {
+      const firstKey = enrichmentCache.keys().next().value;
+      if (firstKey) enrichmentCache.delete(firstKey);
+    }
+    enrichmentCache.set(cacheKey, entry);
+
+    if (mode === "json") {
+      return NextResponse.json({ imdbId, imdbUrl, rating, voteCount, posterUrl: entry.url });
     }
 
-    // 4. Return resolved poster or fall back to TMDB
     if (resolvedPoster) {
-      posterCache.set(cacheKey, resolvedPoster);
       return NextResponse.redirect(resolvedPoster, { status: 307 });
     }
   } catch (error) {
-    console.error(`IMDb poster enrichment failed for ${type} ${id}:`, error);
+    console.error(`IMDb enrichment failed for ${type} ${id}:`, error);
   }
 
+  if (mode === "json") return NextResponse.json({ error: "enrichment failed" }, { status: 500 });
   return handleFallback(fallback);
 }
 
+function buildTmdbFallback(fallback: string) {
+  if (!fallback) return `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/placeholder-media.png`;
+  if (fallback.startsWith("http")) return fallback;
+  return `https://image.tmdb.org/t/p/w500${fallback.startsWith("/") ? "" : "/"}${fallback}`;
+}
+
 function handleFallback(fallback: string) {
-  if (fallback) {
-    // If it's a full URL already
-    if (fallback.startsWith("http")) {
-      return NextResponse.redirect(fallback, { status: 307 });
-    }
-    // TMDB base image URL fallback
-    return NextResponse.redirect(`https://image.tmdb.org/t/p/w500${fallback.startsWith("/") ? "" : "/"}${fallback}`, { status: 307 });
-  }
-  return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/placeholder-media.png`, { status: 307 });
+  return NextResponse.redirect(buildTmdbFallback(fallback), { status: 307 });
 }

@@ -37,6 +37,7 @@ export default function DetailsModal() {
   const [loadingFavorite, setLoadingFavorite] = useState(false);
   const [playTrailer, setPlayTrailer] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [imdbData, setImdbData] = useState<{ imdbId?: string; imdbUrl?: string; rating?: number; voteCount?: number } | null>(null);
 
   const inWatchlist = mediaId ? watchlist.some((item) => String(item.mediaId) === String(mediaId)) : false;
   const isFavorite = mediaId ? favorites.some((item) => String(item.mediaId) === String(mediaId)) : false;
@@ -64,6 +65,13 @@ export default function DetailsModal() {
         setReviews(revRes);
         setRecommendations(recRes);
         setProviders(provRes);
+
+        // Fetch IMDb enrichment data in the background
+        setImdbData(null);
+        fetch(`/api/imdb/poster?id=${mediaId}&type=${mediaType}&mode=json`)
+          .then((r) => r.ok ? r.json() : null)
+          .then((data) => { if (data && !data.error) setImdbData(data); })
+          .catch(() => {});
       } catch (err) {
         console.error("Failed to load details modal data:", err);
       } finally {
@@ -313,6 +321,25 @@ export default function DetailsModal() {
                         <Star className="h-4.5 w-4.5 fill-current mr-0.5" />
                         {details.vote_average?.toFixed(1) || "NR"}
                       </div>
+
+                      {/* IMDb Rating Badge */}
+                      {imdbData?.rating && (
+                        <a
+                          href={imdbData.imdbUrl || "#"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center space-x-1.5 bg-amber-400/10 border border-amber-400/30 hover:border-amber-400/60 rounded-lg px-2.5 py-1 transition-all"
+                          title="View on IMDb"
+                        >
+                          <span className="text-amber-400 font-black text-[10px] tracking-wider uppercase">IMDb</span>
+                          <span className="text-amber-300 font-bold text-xs">{imdbData.rating.toFixed(1)}</span>
+                          {imdbData.voteCount && (
+                            <span className="text-zinc-500 text-[9px]">
+                              ({(imdbData.voteCount / 1000).toFixed(0)}K)
+                            </span>
+                          )}
+                        </a>
+                      )}
                     </div>
 
                     <p className="text-zinc-300 text-sm md:text-base leading-relaxed">
