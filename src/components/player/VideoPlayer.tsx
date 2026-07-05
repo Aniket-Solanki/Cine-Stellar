@@ -65,8 +65,8 @@ export default function VideoPlayer({
   const [showEpisodeDrawer, setShowEpisodeDrawer] = useState(false);
   const [currentEpisode, setCurrentEpisode] = useState(episode);
 
-  // Server-choice state: "cinema" | "vidsrc_to" | "vidsrc_xyz" | "embed_su"
-  const [activeServer, setActiveServer] = useState<"cinema" | "vidsrc_to" | "vidsrc_xyz" | "embed_su">("cinema");
+  // Server-choice state: "vidsrc_to" | "vidsrc_xyz" | "embed_su" | "vidking" | "cinema"
+  const [activeServer, setActiveServer] = useState<"vidsrc_to" | "vidsrc_xyz" | "embed_su" | "vidking" | "cinema">("vidsrc_to");
 
   // Unified Settings Drawer tabbed states
   const [settingsTab, setSettingsTab] = useState<"main" | "server" | "quality" | "speed" | "audio">("main");
@@ -325,9 +325,13 @@ export default function VideoPlayer({
                 ? mediaType === "movie"
                   ? `https://vidsrc.xyz/embed/movie/${mediaId}`
                   : `https://vidsrc.xyz/embed/tv/${mediaId}/${season}/${currentEpisode}`
+                : activeServer === "embed_su"
+                ? mediaType === "movie"
+                  ? `https://embed.su/embed/movie/${mediaId}`
+                  : `https://embed.su/embed/tv/${mediaId}/${season}/${currentEpisode}`
                 : mediaType === "movie"
-                ? `https://embed.su/embed/movie/${mediaId}`
-                : `https://embed.su/embed/tv/${mediaId}/${season}/${currentEpisode}`
+                ? `https://vidking.link/v/${mediaId}`
+                : `https://vidking.link/v/${mediaId}/${season}/${currentEpisode}`
             }
             title="Premium Streaming Player"
             className="w-full h-full border-none"
@@ -547,7 +551,7 @@ export default function VideoPlayer({
                                   <span className="font-semibold text-zinc-300">Server</span>
                                   <div className="flex items-center space-x-1.5 text-rose-500 font-bold">
                                     <span>
-                                      {activeServer === "cinema" ? "Cinema (Direct)" : activeServer === "vidsrc_to" ? "VidSrc TO" : activeServer === "vidsrc_xyz" ? "VidSrc XYZ" : "Embed SU"}
+                                      {activeServer === "cinema" ? "Cinema (Direct)" : activeServer === "vidsrc_to" ? "Server 1 (VidSrc TO)" : activeServer === "vidsrc_xyz" ? "Server 2 (VidSrc XYZ)" : activeServer === "embed_su" ? "Server 3 (Embed SU)" : "Server 4 (VidKing)"}
                                     </span>
                                     <ChevronRight className="h-3.5 w-3.5" />
                                   </div>
@@ -604,10 +608,11 @@ export default function VideoPlayer({
                                 </button>
                                 <div className="flex flex-col space-y-1 mt-1">
                                   {[
-                                    { id: "cinema", name: "Cinema Stream (Direct)" },
-                                    { id: "vidsrc_to", name: "Server 1 (VidSrc TO)" },
+                                    { id: "vidsrc_to", name: "Server 1 (VidSrc TO) - Best" },
                                     { id: "vidsrc_xyz", name: "Server 2 (VidSrc XYZ)" },
                                     { id: "embed_su", name: "Server 3 (Embed SU)" },
+                                    { id: "vidking", name: "Server 4 (VidKing)" },
+                                    { id: "cinema", name: "Cinema Stream (Direct)" },
                                   ].map((srv) => (
                                     <button
                                       key={srv.id}
