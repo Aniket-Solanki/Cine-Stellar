@@ -32,10 +32,7 @@ export type ServerId =
   | "peachify"
   | "nxsha"
   | "nhdapi"
-  | "vidking"
-  | "vidsrc_xyz"
-  | "embed_su"
-  | "cinema";
+  | "vidking";
 
 export const STREAM_SERVERS = [
   { id: "vidsrc_to", name: "Server 1 (VidSrc TO) - Best", flag: "🌐" },
@@ -46,9 +43,6 @@ export const STREAM_SERVERS = [
   { id: "nxsha", name: "Server 6 (Nxsha)", flag: "🇮🇳" },
   { id: "nhdapi", name: "Server 7 (nhdapi)", flag: "🇮🇳" },
   { id: "vidking", name: "Server 8 (VidKing)", flag: "🌐" },
-  { id: "vidsrc_xyz", name: "Server 9 (VidSrc XYZ)", flag: "🌐" },
-  { id: "embed_su", name: "Server 10 (Embed SU)", flag: "🌐" },
-  { id: "cinema", name: "Cinema Stream (Direct Demo)", flag: "🍿" },
 ];
 
 export const resolveServerUrl = (
@@ -92,14 +86,6 @@ export const resolveServerUrl = (
       return isMovie
         ? `https://vidking.link/v/${mediaId}`
         : `https://vidking.link/v/${mediaId}/${season}/${episode}`;
-    case "vidsrc_xyz":
-      return isMovie
-        ? `https://vidsrc.xyz/embed/movie/${mediaId}`
-        : `https://vidsrc.xyz/embed/tv/${mediaId}/${season}/${episode}`;
-    case "embed_su":
-      return isMovie
-        ? `https://embed.su/embed/movie/${mediaId}`
-        : `https://embed.su/embed/tv/${mediaId}/${season}/${episode}`;
     default:
       return "";
   }
@@ -364,8 +350,7 @@ export default function VideoPlayer({
       className="relative w-screen h-screen bg-black overflow-hidden select-none"
     >
       {/* Permanent floating server selector on top of iframe to bypass iframe click blockages */}
-      {activeServer !== "cinema" && (
-        <div className="absolute top-6 right-6 z-50 flex items-center">
+      <div className="absolute top-6 right-6 z-50 flex items-center">
           <div className="relative">
             <button
               onClick={() => setIsFloatingServerOpen(!isFloatingServerOpen)}
@@ -409,7 +394,6 @@ export default function VideoPlayer({
             </AnimatePresence>
           </div>
         </div>
-      )}
       {/* Top Back Controls (visible on hover/pause) */}
       <AnimatePresence>
         {showControls && (
@@ -442,7 +426,7 @@ export default function VideoPlayer({
       </AnimatePresence>
 
       {/* Main Stream Area */}
-      {activeServer !== "cinema" ? (
+      {true ? (
         // Iframe Stream
         <div className="w-full h-full">
           <iframe
@@ -665,7 +649,7 @@ export default function VideoPlayer({
                                   <span className="font-semibold text-zinc-300">Server</span>
                                   <div className="flex items-center space-x-1.5 text-rose-500 font-bold">
                                     <span>
-                                      {activeServer === "cinema" ? "Cinema (Direct)" : activeServer === "vidsrc_to" ? "Server 1 (VidSrc TO)" : activeServer === "vidsrc_xyz" ? "Server 2 (VidSrc XYZ)" : activeServer === "embed_su" ? "Server 3 (Embed SU)" : "Server 4 (VidKing)"}
+                                      {STREAM_SERVERS.find((s) => s.id === activeServer)?.name.split(" - ")[0] || "Select Server"}
                                     </span>
                                     <ChevronRight className="h-3.5 w-3.5" />
                                   </div>
@@ -683,19 +667,7 @@ export default function VideoPlayer({
                                   </div>
                                 </button>
 
-                                {/* 3. Speed Row (Direct only) */}
-                                {activeServer === "cinema" && (
-                                  <button
-                                    onClick={() => setSettingsTab("speed")}
-                                    className="flex items-center justify-between w-full py-2.5 px-3 rounded-lg hover:bg-zinc-900 transition-colors text-left text-xs"
-                                  >
-                                    <span className="font-semibold text-zinc-300">Speed</span>
-                                    <div className="flex items-center space-x-1.5 text-rose-500 font-bold">
-                                      <span>{playbackSpeed === 1 ? "Normal" : `${playbackSpeed}x`}</span>
-                                      <ChevronRight className="h-3.5 w-3.5" />
-                                    </div>
-                                  </button>
-                                )}
+
 
                                 {/* 4. Audio Track Row */}
                                 <button
@@ -721,13 +693,7 @@ export default function VideoPlayer({
                                   <span>Back</span>
                                 </button>
                                 <div className="flex flex-col space-y-1 mt-1">
-                                  {[
-                                    { id: "vidsrc_to", name: "Server 1 (VidSrc TO) - Best" },
-                                    { id: "vidsrc_xyz", name: "Server 2 (VidSrc XYZ)" },
-                                    { id: "embed_su", name: "Server 3 (Embed SU)" },
-                                    { id: "vidking", name: "Server 4 (VidKing)" },
-                                    { id: "cinema", name: "Cinema Stream (Direct)" },
-                                  ].map((srv) => (
+                                  {STREAM_SERVERS.map((srv) => (
                                     <button
                                       key={srv.id}
                                       onClick={() => {
@@ -735,11 +701,12 @@ export default function VideoPlayer({
                                         setIsPlaying(false);
                                         setSettingsTab("main");
                                       }}
-                                      className={`w-full px-3 py-2 text-xs text-left rounded-lg hover:bg-zinc-900 transition-colors ${
+                                      className={`w-full px-3 py-2 text-xs text-left rounded-lg hover:bg-zinc-900 transition-colors flex items-center justify-between ${
                                         activeServer === srv.id ? "text-rose-500 font-bold bg-rose-600/10" : "text-zinc-300"
                                       }`}
                                     >
-                                      {srv.name}
+                                      <span>{srv.name}</span>
+                                      <span className="text-sm">{srv.flag}</span>
                                     </button>
                                   ))}
                                 </div>
