@@ -301,23 +301,6 @@ export default function VideoPlayer({
                 </p>
               )}
             </div>
-
-            {/* Active Streaming Server Selector */}
-            <div className="relative">
-              <select
-                value={activeServer}
-                onChange={(e) => {
-                  setActiveServer(e.target.value as any);
-                  setIsPlaying(false);
-                }}
-                className="bg-zinc-950/90 text-zinc-300 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-bold cursor-pointer focus:outline-none focus:ring-1 focus:ring-rose-500 hover:text-white transition-colors"
-              >
-                <option value="cinema">Cinema Stream (Direct)</option>
-                <option value="vidsrc_to">Server 1 (VidSrc TO)</option>
-                <option value="vidsrc_xyz">Server 2 (VidSrc XYZ)</option>
-                <option value="embed_su">Server 3 (Embed SU)</option>
-              </select>
-            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -524,7 +507,7 @@ export default function VideoPlayer({
                       </AnimatePresence>
                     </div>
 
-                    {/* Speed Settings dropdown */}
+                    {/* Speed / Server Settings dropdown */}
                     <div className="relative">
                       <button
                         onClick={() => {
@@ -532,7 +515,7 @@ export default function VideoPlayer({
                           setShowSubtitlesMenu(false);
                         }}
                         className="p-1 text-zinc-300 hover:text-white transition-colors cursor-pointer focus:outline-none"
-                        title="Playback Speed"
+                        title="Streaming Settings"
                       >
                         <Settings className="h-6 w-6" />
                       </button>
@@ -543,22 +526,61 @@ export default function VideoPlayer({
                             initial={{ opacity: 0, y: -10 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
-                            className="absolute bottom-10 right-0 w-32 rounded-lg bg-zinc-950/95 border border-zinc-800 p-1 flex flex-col text-sm text-zinc-300 z-50 shadow-2xl"
+                            className="absolute bottom-10 right-0 w-60 rounded-xl bg-zinc-950/95 border border-zinc-800 p-4 flex flex-col text-sm text-zinc-300 z-50 shadow-2xl space-y-4"
                           >
-                            {[0.5, 1, 1.25, 1.5, 2].map((speed) => (
-                              <button
-                                key={speed}
-                                onClick={() => {
-                                  setPlaybackSpeed(speed);
-                                  setShowSpeedMenu(false);
-                                }}
-                                className={`px-3 py-1.5 text-left rounded hover:bg-zinc-800 transition-colors ${
-                                  playbackSpeed === speed ? "text-rose-500 font-bold" : ""
-                                }`}
-                              >
-                                {speed === 1 ? "Normal" : `${speed}x`}
-                              </button>
-                            ))}
+                            {/* Server Selection Section */}
+                            <div>
+                              <h4 className="text-[11px] font-extrabold text-rose-500 tracking-wider uppercase border-b border-zinc-900 pb-1.5 mb-2.5">
+                                Streaming Server
+                              </h4>
+                              <div className="flex flex-col space-y-1">
+                                {[
+                                  { id: "cinema", name: "Cinema Stream (Direct)" },
+                                  { id: "vidsrc_to", name: "Server 1 (VidSrc TO)" },
+                                  { id: "vidsrc_xyz", name: "Server 2 (VidSrc XYZ)" },
+                                  { id: "embed_su", name: "Server 3 (Embed SU)" },
+                                ].map((srv) => (
+                                  <button
+                                    key={srv.id}
+                                    onClick={() => {
+                                      setActiveServer(srv.id as any);
+                                      setIsPlaying(false);
+                                      setShowSpeedMenu(false);
+                                    }}
+                                    className={`px-2.5 py-1.5 text-xs text-left rounded hover:bg-zinc-850 transition-colors ${
+                                      activeServer === srv.id ? "text-rose-500 font-bold bg-rose-600/10" : ""
+                                    }`}
+                                  >
+                                    {srv.name}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Playback Speed Section (Only for direct video) */}
+                            {activeServer === "cinema" && (
+                              <div>
+                                <h4 className="text-[11px] font-extrabold text-rose-500 tracking-wider uppercase border-b border-zinc-900 pb-1.5 mb-2.5">
+                                  Playback Speed
+                                </h4>
+                                <div className="grid grid-cols-5 gap-1">
+                                  {[0.5, 1, 1.25, 1.5, 2].map((speed) => (
+                                    <button
+                                      key={speed}
+                                      onClick={() => {
+                                        setPlaybackSpeed(speed);
+                                        setShowSpeedMenu(false);
+                                      }}
+                                      className={`py-1 text-[11px] text-center rounded hover:bg-zinc-850 transition-colors ${
+                                        playbackSpeed === speed ? "text-rose-500 font-bold bg-rose-600/10" : ""
+                                      }`}
+                                    >
+                                      {speed === 1 ? "1x" : `${speed}x`}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </motion.div>
                         )}
                       </AnimatePresence>

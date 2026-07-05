@@ -88,6 +88,8 @@ export default function Navbar() {
     }
   };
 
+  if (pathname?.startsWith("/watch")) return null;
+
   return (
     <nav
       className={`fixed top-0 inset-x-0 z-40 transition-all duration-350 ${
