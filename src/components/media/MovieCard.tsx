@@ -123,17 +123,17 @@ export default function MovieCard({
         }
         alt={title}
         loading="lazy"
-        className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+        className="w-full h-full object-cover"
       />
 
-      {/* Glass Overlay details on hover */}
+      {/* Glass Overlay details on hover (Desktop only to prevent touch jank) */}
       <AnimatePresence>
         {isHovered && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent flex flex-col justify-end p-3 sm:p-4"
+            className="hidden md:flex absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent flex flex-col justify-end p-4"
           >
             <h4 className="text-white text-xs sm:text-sm font-extrabold tracking-tight line-clamp-1 mb-1">
               {title}

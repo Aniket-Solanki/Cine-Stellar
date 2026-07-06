@@ -1,12 +1,12 @@
 // Cinematic full-screen details overlay with tabbed layout, rich metadata from TMDB + IMDb
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import {
   Play, Plus, Check, Star, Heart, Share2, X,
   Film, Globe, Calendar, Clock, Award, Users,
   ChevronRight, BookOpen, Clapperboard, Image as ImageIcon, Tv,
-  ExternalLink, ThumbsUp, Info,
+  ExternalLink, ThumbsUp, Info, Loader
 } from "lucide-react";
 import { Dialog, DialogContent } from "../ui/dialog";
 import Button from "../ui/button";
@@ -28,10 +28,11 @@ interface ImdbData {
   posterUrl?: string;
 }
 
-type TabId = "overview" | "details" | "media" | "more";
+type TabId = "overview" | "episodes" | "details" | "media" | "more";
 
 const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
   { id: "overview",  label: "Overview",       icon: <Info className="w-3.5 h-3.5" /> },
+  { id: "episodes",  label: "Episodes",       icon: <Tv className="w-3.5 h-3.5" /> },
   { id: "details",   label: "Details",        icon: <BookOpen className="w-3.5 h-3.5" /> },
   { id: "media",     label: "Media",          icon: <ImageIcon className="w-3.5 h-3.5" /> },
   { id: "more",      label: "More Like This", icon: <Film className="w-3.5 h-3.5" /> },
@@ -105,6 +106,14 @@ export default function DetailsModal() {
   const [loadingFavorite, setLoadingFavorite]   = useState(false);
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
 
+  // Seasons & Episodes states
+  const [selectedSeason, setSelectedSeason] = useState(1);
+  const [seasonEpisodes, setSeasonEpisodes] = useState<any[]>([]);
+  const [loadingEpisodes, setLoadingEpisodes] = useState(false);
+
+  // Ref to the scroll container to force scroll-to-top on actions
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
   const inWatchlist = mediaId ? watchlist.some((item) => String(item.mediaId) === String(mediaId)) : false;
   const isFavorite  = mediaId ? favorites.some((item) => String(item.mediaId) === String(mediaId)) : false;
 
@@ -119,6 +128,8 @@ export default function DetailsModal() {
       setActiveTrailer(null);
       setImdbData(null);
       setDetails(null);
+      setSelectedSeason(1);
+      setSeasonEpisodes([]);
 
       try {
         const enhanced = await tmdbService.getDetailsEnhanced(mediaId!, mediaType!);
@@ -137,6 +148,39 @@ export default function DetailsModal() {
     }
     loadData();
   }, [isOpen, mediaId, mediaType]);
+
+  // Dynamically load episodes of selected TV season
+  useEffect(() => {
+    if (!isOpen || mediaType !== "tv" || !mediaId) return;
+
+    async function loadEpisodes() {
+      setLoadingEpisodes(true);
+      try {
+        const res = await fetch(`/api/tv/season?tvId=${mediaId}&seasonNumber=${selectedSeason}`);
+        if (res.ok) {
+          const data = await res.json();
+          setSeasonEpisodes(data.episodes || []);
+        }
+      } catch (err) {
+        console.error("Failed to load season episodes:", err);
+      } finally {
+        setLoadingEpisodes(false);
+      }
+    }
+    loadEpisodes();
+  }, [isOpen, mediaId, mediaType, selectedSeason]);
+
+  // Scroll tab content panel to top when active tab changes
+  useEffect(() => {
+    scrollContainerRef.current?.scrollTo({ top: 0 });
+  }, [activeTab]);
+
+  // Scroll tab content panel to top when a trailer starts playing
+  useEffect(() => {
+    if (playTrailer) {
+      scrollContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [playTrailer, activeTrailer]);
 
   // ── Auth-gated actions ──────────────────────────────────────────────────────
   const handleWatchlistToggle = async () => {
@@ -226,6 +270,15 @@ export default function DetailsModal() {
 
       <Dialog isOpen={isOpen} onClose={closeDetailModal}>
         <DialogContent showCloseButton={false} className="max-w-5xl w-full max-h-[95vh] p-0 bg-[#0c0c10] border border-zinc-800/60 rounded-2xl overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.9)] flex flex-col">
+
+          {/* Close button */}
+          <button
+            onClick={closeDetailModal}
+            className="absolute top-4 right-4 z-50 p-2 rounded-full bg-zinc-950/80 border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-500 transition-colors shadow-lg cursor-pointer"
+            aria-label="Close details modal"
+          >
+            <X className="w-5 h-5" />
+          </button>
 
           {/* ── Hero Banner ─────────────────────────────────────────────────── */}
           {loading ? (
@@ -376,12 +429,12 @@ export default function DetailsModal() {
 
           {/* ── Tabs ────────────────────────────────────────────────────────── */}
           {!loading && details && (
-            <div className="flex-shrink-0 flex items-center gap-1 px-5 md:px-7 pt-3 pb-0 border-b border-zinc-800/60">
-              {TABS.map((tab) => (
+            <div className="flex-shrink-0 flex items-center gap-1 px-5 md:px-7 pt-3 pb-0 border-b border-zinc-800/60 overflow-x-auto no-scrollbar whitespace-nowrap scroll-smooth">
+              {TABS.filter(tab => tab.id !== "episodes" || mediaType === "tv").map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold uppercase tracking-wider rounded-t-lg transition-all border-b-2 -mb-px ${
+                  className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold uppercase tracking-wider rounded-t-lg transition-all border-b-2 -mb-px flex-shrink-0 ${
                     activeTab === tab.id
                       ? "text-white border-rose-600 bg-zinc-800/50"
                       : "text-zinc-500 border-transparent hover:text-zinc-300"
@@ -394,7 +447,7 @@ export default function DetailsModal() {
           )}
 
           {/* ── Tab Content ─────────────────────────────────────────────────── */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar">
+          <div ref={scrollContainerRef} className="flex-1 overflow-y-auto custom-scrollbar">
             {loading ? (
               <div className="p-7 space-y-4">
                 {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-6 w-full rounded-lg" />)}
@@ -540,6 +593,116 @@ export default function DetailsModal() {
                             </div>
                           ))}
                         </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* ═══ EPISODES TAB ══════════════════════════════════════════ */}
+                {activeTab === "episodes" && mediaType === "tv" && (
+                  <div className="space-y-6">
+                    {/* Season Selector */}
+                    <div className="flex items-center gap-3 overflow-x-auto no-scrollbar py-1">
+                      <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 whitespace-nowrap">Season:</span>
+                      <div className="flex gap-2">
+                        {details.seasons && details.seasons.length > 0 ? (
+                          details.seasons
+                            .filter((s: any) => s.season_number > 0)
+                            .map((s: any) => (
+                              <button
+                                key={s.id}
+                                onClick={() => setSelectedSeason(s.season_number)}
+                                className={`px-4 py-1.5 rounded-full text-xs font-extrabold transition-all cursor-pointer whitespace-nowrap ${
+                                  selectedSeason === s.season_number
+                                    ? "bg-rose-600 text-white shadow-lg shadow-rose-600/15"
+                                    : "bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200"
+                                }`}
+                              >
+                                {s.name || `Season ${s.season_number}`}
+                              </button>
+                            ))
+                        ) : (
+                          Array.from({ length: details.number_of_seasons || 1 }).map((_, i) => {
+                            const sNum = i + 1;
+                            return (
+                              <button
+                                key={sNum}
+                                onClick={() => setSelectedSeason(sNum)}
+                                className={`px-4 py-1.5 rounded-full text-xs font-extrabold transition-all cursor-pointer whitespace-nowrap ${
+                                  selectedSeason === sNum
+                                    ? "bg-rose-600 text-white shadow-lg shadow-rose-600/15"
+                                    : "bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200"
+                                }`}
+                              >
+                                Season {sNum}
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Episodes List */}
+                    {loadingEpisodes ? (
+                      <div className="flex flex-col items-center justify-center py-20 space-y-3">
+                        <Loader className="h-7 w-7 animate-spin text-rose-600" />
+                        <span className="text-xs text-zinc-500 font-bold">Loading season episodes...</span>
+                      </div>
+                    ) : seasonEpisodes.length > 0 ? (
+                      <div className="space-y-3">
+                        {seasonEpisodes.map((ep: any) => {
+                          const epNum = ep.episode_number;
+                          const epTitle = ep.name || `Episode ${epNum}`;
+                          const epPlot = ep.overview || "No overview available for this episode.";
+                          const epThumb = ep.still_path ? getImagePath(ep.still_path, "w500") : null;
+                          const epRuntime = ep.runtime ? `${ep.runtime}m` : null;
+                          const epAirDate = ep.air_date ? new Date(ep.air_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : null;
+
+                          return (
+                            <div
+                              key={ep.id}
+                              onClick={() => {
+                                closeDetailModal();
+                                router.push(`/watch/tv/${mediaId}?s=${selectedSeason}&e=${epNum}`);
+                              }}
+                              className="group flex flex-col sm:flex-row gap-4 p-3 bg-zinc-900/30 hover:bg-zinc-900/60 border border-zinc-900 hover:border-zinc-800/80 rounded-2xl cursor-pointer transition-all duration-200"
+                            >
+                              {/* Episode Thumbnail */}
+                              <div className="w-full sm:w-44 aspect-video rounded-xl overflow-hidden bg-zinc-950 border border-white/5 relative flex-shrink-0">
+                                {epThumb ? (
+                                  <img src={epThumb} alt={epTitle} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-zinc-655 bg-zinc-900">
+                                    <Film className="w-8 h-8 opacity-30" />
+                                  </div>
+                                )}
+                                {/* Play Overlay */}
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                  <div className="w-9 h-9 rounded-full bg-rose-600 flex items-center justify-center shadow-lg text-white">
+                                    <Play className="w-4 h-4 fill-current ml-0.5" />
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Episode details */}
+                              <div className="flex-1 min-w-0 flex flex-col justify-center text-left space-y-0.5">
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                  <span className="text-[9px] font-black text-rose-500 tracking-wider uppercase">Episode {epNum}</span>
+                                  {(epRuntime || epAirDate) && <span className="text-zinc-700 text-xs">•</span>}
+                                  {epRuntime && <span className="text-[10px] text-zinc-400 font-semibold">{epRuntime}</span>}
+                                  {epAirDate && <span className="text-[10px] text-zinc-500 font-medium">{epAirDate}</span>}
+                                </div>
+                                <h4 className="text-sm font-extrabold text-white group-hover:text-rose-400 transition-colors line-clamp-1">{epTitle}</h4>
+                                <p className="text-[11px] text-zinc-400 leading-relaxed line-clamp-2 pt-0.5 font-medium">{epPlot}</p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-12 text-zinc-600">
+                        <Tv className="w-10 h-10 mb-2 opacity-30" />
+                        <p className="text-sm">No episodes found for this season.</p>
                       </div>
                     )}
                   </div>

@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Button from "../ui/button";
+import { getImagePath } from "@/lib/services/tmdb";
 
 export type ServerId =
   | "vidsrc_to"
@@ -174,6 +175,32 @@ export default function VideoPlayer({
   // Episode Drawer
   const [showEpisodeDrawer, setShowEpisodeDrawer] = useState(false);
   const [currentEpisode, setCurrentEpisode] = useState(episode);
+  const [episodesList, setEpisodesList] = useState<any[]>([]);
+
+  // Synchronize currentEpisode state when prop changes (such as from browser back/forward or route switches)
+  useEffect(() => {
+    setCurrentEpisode(episode);
+  }, [episode]);
+
+  // Dynamically load episodes when season changes
+  useEffect(() => {
+    if (mediaType !== "tv" || !mediaId) return;
+
+    async function loadEpisodes() {
+      try {
+        const res = await fetch(`/api/tv/season?tvId=${mediaId}&seasonNumber=${season}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.episodes) {
+            setEpisodesList(data.episodes);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch episodes list for player:", err);
+      }
+    }
+    loadEpisodes();
+  }, [mediaId, mediaType, season]);
 
   // Server-choice state: ServerId
   const [activeServer, setActiveServer] = useState<ServerId>("vidsrc_to");
@@ -193,25 +220,26 @@ export default function VideoPlayer({
     const resetTimer = () => {
       setShowControls(true);
       clearTimeout(timeout);
-      if (isPlaying) {
-        timeout = setTimeout(() => setShowControls(false), 3000);
-      }
+      // Auto-hide controls after 3 seconds of inactivity (for both iframe and native)
+      timeout = setTimeout(() => setShowControls(false), 3000);
     };
 
     const container = containerRef.current;
     if (container) {
       container.addEventListener("mousemove", resetTimer);
       container.addEventListener("keypress", resetTimer);
+      container.addEventListener("touchstart", resetTimer);
     }
 
     return () => {
       if (container) {
         container.removeEventListener("mousemove", resetTimer);
         container.removeEventListener("keypress", resetTimer);
+        container.removeEventListener("touchstart", resetTimer);
       }
       clearTimeout(timeout);
     };
-  }, [isPlaying]);
+  }, []);
 
   // Keyboard Shortcuts
   useEffect(() => {
@@ -372,6 +400,10 @@ export default function VideoPlayer({
   const selectEpisode = (epNum: number) => {
     setCurrentEpisode(epNum);
     setShowEpisodeDrawer(false);
+    
+    // Sync current episode with URL parameters
+    router.push(`/watch/tv/${mediaId}?s=${season}&e=${epNum}`);
+    
     const video = videoRef.current;
     if (video) {
       video.currentTime = 0;
@@ -411,7 +443,7 @@ export default function VideoPlayer({
                   initial={{ opacity: 0, y: 10, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  className="absolute right-0 mt-2 w-64 rounded-xl bg-zinc-950/95 border border-zinc-800 p-1.5 flex flex-col text-xs text-zinc-300 shadow-2xl z-50 space-y-0.5"
+                  className="absolute right-0 mt-2 w-64 max-h-56 overflow-y-auto custom-scrollbar rounded-xl bg-zinc-950/95 border border-zinc-800 p-1.5 flex flex-col text-xs text-zinc-300 shadow-2xl z-50 space-y-0.5"
                 >
                   {STREAM_SERVERS.map((srv) => (
                     <button
@@ -470,13 +502,79 @@ export default function VideoPlayer({
       {/* Main Stream Area */}
       {true ? (
         // Iframe Stream
-        <div className="w-full h-full">
+        <div className="w-full h-full relative">
           <iframe
             src={resolveServerUrl(activeServer, mediaId, mediaType, season, currentEpisode)}
             title="Premium Streaming Player"
             className="w-full h-full border-none"
             allowFullScreen
           />
+
+          {/* Bottom Floating Control Deck overlaying the iframe */}
+          <AnimatePresence>
+            {showControls && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                className="absolute bottom-6 inset-x-6 z-30 p-4 rounded-2xl bg-zinc-950/90 border border-zinc-800/80 shadow-2xl backdrop-blur flex items-center justify-between text-white"
+              >
+                {/* Left: Live status */}
+                <div className="flex items-center space-x-3">
+                  <span className="text-[10px] font-black text-rose-500 uppercase tracking-widest bg-rose-500/10 px-2.5 py-1 rounded-lg border border-rose-500/20">
+                    Live Stream
+                  </span>
+                  <span className="text-xs text-zinc-400 font-bold hidden sm:inline">
+                    {STREAM_SERVERS.find((s) => s.id === activeServer)?.name}
+                  </span>
+                </div>
+
+                {/* Center: TV navigation */}
+                <div className="flex items-center space-x-2">
+                  {mediaType === "tv" && (
+                    <>
+                      <button
+                        onClick={() => setShowEpisodeDrawer(true)}
+                        className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-xs font-bold text-zinc-300 hover:text-white transition-all cursor-pointer hover:bg-zinc-800 focus:outline-none"
+                      >
+                        <Tv className="h-4 w-4" />
+                        <span>Episodes</span>
+                      </button>
+
+                      {currentEpisode < episodesList.length && (
+                        <button
+                          onClick={() => selectEpisode(currentEpisode + 1)}
+                          className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-rose-600 border border-rose-500 text-xs font-bold text-white hover:bg-rose-500 transition-all cursor-pointer shadow-lg shadow-rose-600/20 focus:outline-none"
+                        >
+                          <span>Next Episode</span>
+                          <SkipForward className="h-4 w-4" />
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+
+                {/* Right: Servers and Fullscreen */}
+                <div className="flex items-center space-x-2.5">
+                  <button
+                    onClick={() => setIsFloatingServerOpen(!isFloatingServerOpen)}
+                    className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-xs font-bold text-zinc-300 hover:text-white transition-all cursor-pointer hover:bg-zinc-800 focus:outline-none"
+                  >
+                    <Settings className="h-4 w-4" />
+                    <span>Servers</span>
+                  </button>
+
+                  <button
+                    onClick={toggleFullscreen}
+                    className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white transition-all cursor-pointer hover:bg-zinc-850 focus:outline-none"
+                    title="Toggle Fullscreen"
+                  >
+                    {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       ) : (
         // Direct HTML5 Player
@@ -734,7 +832,7 @@ export default function VideoPlayer({
                                   <ChevronLeft className="h-4 w-4" />
                                   <span>Back</span>
                                 </button>
-                                <div className="flex flex-col space-y-1 mt-1">
+                                 <div className="flex flex-col space-y-1 mt-1 max-h-56 overflow-y-auto custom-scrollbar pr-1">
                                   {STREAM_SERVERS.map((srv) => (
                                     <button
                                       key={srv.id}
@@ -896,30 +994,61 @@ export default function VideoPlayer({
               </p>
 
               <div className="flex-1 overflow-y-auto no-scrollbar space-y-3.5 pr-2">
-                {Array.from({ length: episodesCount }).map((_, i) => {
-                  const epNum = i + 1;
-                  return (
-                    <div
-                      key={epNum}
-                      onClick={() => selectEpisode(epNum)}
-                      className={`p-4 rounded-xl border cursor-pointer flex items-center justify-between transition-all ${
-                        currentEpisode === epNum
-                          ? "bg-rose-600/10 border-rose-600/50 text-white"
-                          : "bg-zinc-900/40 border-zinc-850 hover:bg-zinc-800/80 text-zinc-300"
-                      }`}
-                    >
-                      <div className="space-y-1">
-                        <p className="text-sm font-bold">
-                          Episode {epNum}
-                        </p>
-                        <p className="text-xs text-zinc-400 line-clamp-1">
-                          Cinema stream preview episode {epNum}
-                        </p>
+                {episodesList.length > 0 ? (
+                  episodesList.map((ep: any) => {
+                    const epNum = ep.episode_number;
+                    const epTitle = ep.name || `Episode ${epNum}`;
+                    const epPlot = ep.overview || `Watch Episode ${epNum} of Season ${season}`;
+                    const epThumb = ep.still_path ? getImagePath(ep.still_path, "w500") : null;
+                    return (
+                      <div
+                        key={epNum}
+                        onClick={() => selectEpisode(epNum)}
+                        className={`p-3 rounded-xl border cursor-pointer flex gap-3 transition-all ${
+                          currentEpisode === epNum
+                            ? "bg-rose-600/10 border-rose-600/50 text-white animate-pulse-subtle"
+                            : "bg-zinc-900/40 border-zinc-850 hover:bg-zinc-800/80 text-zinc-300"
+                        }`}
+                      >
+                        {epThumb && (
+                          <div className="w-24 aspect-video rounded-lg overflow-hidden flex-shrink-0 bg-zinc-800 border border-white/5">
+                            <img src={epThumb} alt={epTitle} className="w-full h-full object-cover" />
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1 flex flex-col justify-center">
+                          <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest">Episode {epNum}</p>
+                          <p className="text-xs font-black truncate text-white mt-0.5">{epTitle}</p>
+                          <p className="text-[10px] text-zinc-500 line-clamp-1 mt-1 font-medium">{epPlot}</p>
+                        </div>
                       </div>
-                      <Play className="h-4 w-4 fill-current opacity-70" />
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                ) : (
+                  Array.from({ length: episodesCount }).map((_, i) => {
+                    const epNum = i + 1;
+                    return (
+                      <div
+                        key={epNum}
+                        onClick={() => selectEpisode(epNum)}
+                        className={`p-4 rounded-xl border cursor-pointer flex items-center justify-between transition-all ${
+                          currentEpisode === epNum
+                            ? "bg-rose-600/10 border-rose-600/50 text-white"
+                            : "bg-zinc-900/40 border-zinc-850 hover:bg-zinc-800/80 text-zinc-300"
+                        }`}
+                      >
+                        <div className="space-y-1">
+                          <p className="text-sm font-bold">
+                            Episode {epNum}
+                          </p>
+                          <p className="text-xs text-zinc-400 line-clamp-1">
+                            Cinema stream preview episode {epNum}
+                          </p>
+                        </div>
+                        <Play className="h-4 w-4 fill-current opacity-70" />
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </motion.div>
           </div>

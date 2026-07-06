@@ -9,14 +9,22 @@ interface WatchPageProps {
     type: string;
     id: string;
   }>;
+  searchParams: Promise<{
+    s?: string;
+    e?: string;
+  }>;
 }
 
-export default async function WatchPage({ params }: WatchPageProps) {
+export default async function WatchPage({ params, searchParams }: WatchPageProps) {
   const { type, id } = await params;
+  const { s, e } = await searchParams;
 
   if (type !== "movie" && type !== "tv") {
     notFound();
   }
+
+  const parsedSeason = s ? parseInt(s, 10) : 1;
+  const parsedEpisode = e ? parseInt(e, 10) : 1;
 
   // Load basic details for title metadata
   let title = "Streaming Media";
@@ -37,9 +45,9 @@ export default async function WatchPage({ params }: WatchPageProps) {
         mediaType={type}
         title={title}
         backdropPath={backdropPath}
-        season={type === "tv" ? 1 : undefined}
-        episode={type === "tv" ? 1 : undefined}
-        episodesCount={type === "tv" ? 10 : undefined}
+        season={type === "tv" ? parsedSeason : undefined}
+        episode={type === "tv" ? parsedEpisode : undefined}
+        episodesCount={type === "tv" ? 24 : undefined} // will be dynamically loaded inside player as well
       />
     </div>
   );

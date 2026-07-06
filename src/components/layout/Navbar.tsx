@@ -36,6 +36,13 @@ const TV_GENRES = [
   { id: 9648, name: "Mystery" },
 ];
 
+const NOTIFICATIONS = [
+  { id: 1, text: "🆕 Streaming Release: Inception is now available in Ultra-HD.", time: "2 hours ago", unread: true },
+  { id: 2, text: "⭐ Recommendation: We picked 'Interstellar' based on your favorites.", time: "1 day ago", unread: true },
+  { id: 3, text: "🍿 New Episodes: Stranger Things Season 4 is now playing.", time: "2 days ago", unread: false },
+  { id: 4, text: "🎉 Welcome: Explore premium movies & TV shows on Cine-Stellar.", time: "3 days ago", unread: false }
+];
+
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -46,6 +53,7 @@ export default function Navbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
   const [isMobileCategoriesOpen, setIsMobileCategoriesOpen] = useState(false);
@@ -218,15 +226,57 @@ export default function Navbar() {
           {user ? (
             <>
               {/* Notification Bell */}
-              <button className="hidden sm:block p-1.5 text-zinc-400 hover:text-white transition-colors relative cursor-pointer">
-                <Bell className="h-5 w-5" />
-                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-rose-600 animate-pulse" />
-              </button>
+              <div className="relative hidden sm:block">
+                <button
+                  onClick={() => {
+                    setIsNotificationsOpen(!isNotificationsOpen);
+                    setIsProfileDropdownOpen(false);
+                  }}
+                  className="p-1.5 text-zinc-400 hover:text-white transition-colors relative cursor-pointer focus:outline-none"
+                >
+                  <Bell className="h-5 w-5" />
+                  <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-rose-600 animate-pulse" />
+                </button>
+
+                <AnimatePresence>
+                  {isNotificationsOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute right-0 mt-3 w-80 rounded-2xl glass-panel border border-zinc-800 shadow-2xl overflow-hidden py-3 text-xs text-zinc-200 z-50 flex flex-col space-y-2.5 p-3"
+                    >
+                      <div className="px-2 pb-1.5 border-b border-zinc-850 flex items-center justify-between">
+                        <span className="font-black text-white uppercase tracking-widest text-[10px]">Notifications</span>
+                        <span className="text-[9px] font-bold text-rose-500 uppercase">2 New</span>
+                      </div>
+                      <div className="flex flex-col space-y-2 max-h-64 overflow-y-auto custom-scrollbar">
+                        {NOTIFICATIONS.map((item) => (
+                          <div
+                            key={item.id}
+                            className={`p-2.5 rounded-xl border transition-all text-left space-y-1 ${
+                              item.unread
+                                ? "bg-rose-600/5 border-rose-500/25 text-white"
+                                : "bg-zinc-900/30 border-zinc-900 text-zinc-400"
+                            }`}
+                          >
+                            <p className="leading-relaxed font-semibold">{item.text}</p>
+                            <span className="text-[9px] text-zinc-500 font-bold block">{item.time}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
 
               {/* Avatar & Dropdown Menu */}
               <div className="relative">
                 <button
-                  onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                  onClick={() => {
+                    setIsProfileDropdownOpen(!isProfileDropdownOpen);
+                    setIsNotificationsOpen(false);
+                  }}
                   className="flex items-center space-x-1.5 focus:outline-none cursor-pointer"
                 >
                   <img
