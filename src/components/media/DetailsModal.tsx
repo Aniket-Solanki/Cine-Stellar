@@ -341,7 +341,10 @@ export default function DetailsModal() {
                     {seasons && <><span className="text-zinc-600">•</span><span className="flex items-center gap-1"><Tv className="w-3 h-3" />{seasons} Season{seasons > 1 ? "s" : ""}</span></>}
                     {episodes && <><span className="text-zinc-600">•</span><span>{episodes} Episodes</span></>}
                     {genres.slice(0, 3).map((g: string) => (
-                      <><span className="text-zinc-600">•</span><span key={g}>{g}</span></>
+                      <React.Fragment key={g}>
+                        <span className="text-zinc-600">•</span>
+                        <span>{g}</span>
+                      </React.Fragment>
                     ))}
                   </div>
                 </div>
@@ -351,9 +354,9 @@ export default function DetailsModal() {
 
           {/* ── Rating + Action Row ─────────────────────────────────────────── */}
           {!loading && details && (
-            <div className="flex-shrink-0 flex flex-wrap items-center justify-between gap-3 px-5 md:px-7 py-3 border-b border-zinc-800/60 bg-zinc-900/30">
+            <div className="flex-shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-4 px-5 md:px-7 py-4 border-b border-zinc-800/60 bg-zinc-900/30">
               {/* Ratings */}
-              <div className="flex items-center gap-4">
+              <div className="flex flex-wrap items-center gap-4">
                 {tmdbScore > 0 && (
                   <div className="flex items-center gap-2">
                     <RatingRing value={tmdbScore} color="#e11d48" />
@@ -365,45 +368,47 @@ export default function DetailsModal() {
                 )}
                 {imdbData?.rating && (
                   <a href={imdbData.imdbUrl || "#"} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-2 bg-amber-400/10 hover:bg-amber-400/20 border border-amber-400/30 hover:border-amber-400/60 rounded-xl px-3 py-2 transition-all group">
+                    className="flex items-center gap-2 bg-amber-400/10 hover:bg-amber-400/20 border border-amber-400/30 hover:border-amber-400/60 rounded-xl px-3 py-1.5 transition-all group">
                     <div className="text-center">
-                      <div className="text-amber-400 font-black text-xs tracking-widest uppercase flex items-center gap-1">IMDb <ExternalLink className="w-2.5 h-2.5 opacity-50 group-hover:opacity-100" /></div>
-                      <div className="text-amber-300 font-black text-lg leading-none">{imdbData.rating.toFixed(1)}</div>
-                      {imdbData.voteCount && <div className="text-zinc-500 text-[9px]">{formatVotes(imdbData.voteCount)}</div>}
+                      <div className="text-amber-400 font-black text-[9px] tracking-widest uppercase flex items-center gap-1">IMDb <ExternalLink className="w-2.5 h-2.5 opacity-50 group-hover:opacity-100" /></div>
+                      <div className="text-amber-300 font-black text-base leading-none">{imdbData.rating.toFixed(1)}</div>
+                      {imdbData.voteCount && <div className="text-zinc-500 text-[8px]">{formatVotes(imdbData.voteCount)}</div>}
                     </div>
                   </a>
                 )}
                 {imdbData?.metacriticScore != null && (
                   <div className="flex flex-col items-center">
                     <div className="text-[9px] font-bold uppercase tracking-wider text-zinc-500 mb-1">Metacritic</div>
-                    <span className={`font-black text-sm px-2.5 py-1.5 rounded-lg ${metaColor(imdbData.metacriticScore)}`}>
+                    <span className={`font-black text-xs px-2 py-1 rounded-md ${metaColor(imdbData.metacriticScore)}`}>
                       {imdbData.metacriticScore}
                     </span>
-                    {imdbData.metacriticCount && <div className="text-[9px] text-zinc-600 mt-0.5">{imdbData.metacriticCount} reviews</div>}
+                    {imdbData.metacriticCount && <div className="text-[8px] text-zinc-655 mt-0.5">{imdbData.metacriticCount} reviews</div>}
                   </div>
                 )}
               </div>
 
               {/* Action buttons */}
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-start md:justify-end">
                 {mainTrailer && (
-                  <Button
+                  <button
                     onClick={() => { setPlayTrailer(true); setActiveTrailer(mainTrailer); }}
-                    className="flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-sm font-bold rounded-xl transition-all"
+                    className="h-10 px-4 flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all active:scale-95 duration-150 cursor-pointer shadow-lg shadow-rose-600/10"
                   >
-                    <Play className="w-4 h-4 fill-current" /> Trailer
-                  </Button>
+                    <Play className="w-3.5 h-3.5 fill-current" />
+                    <span>Trailer</span>
+                  </button>
                 )}
-                <Button
+                <button
                   onClick={handleWatch}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-white hover:bg-zinc-100 text-black text-sm font-bold rounded-xl transition-all"
+                  className="h-10 px-4 flex items-center justify-center gap-2 bg-white hover:bg-zinc-200 text-black text-xs font-black uppercase tracking-wider rounded-xl transition-all active:scale-95 duration-150 cursor-pointer"
                 >
-                  <Play className="w-4 h-4 fill-current" /> Watch
-                </Button>
+                  <Play className="w-3.5 h-3.5 fill-current" />
+                  <span>Watch</span>
+                </button>
                 <button
                   onClick={handleWatchlistToggle}
                   disabled={loadingWatchlist}
-                  className={`p-2.5 rounded-xl border transition-all ${inWatchlist ? "bg-rose-600/20 border-rose-600/50 text-rose-400" : "bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500"}`}
+                  className={`w-10 h-10 flex items-center justify-center rounded-xl border transition-all active:scale-95 duration-150 cursor-pointer flex-shrink-0 ${inWatchlist ? "bg-rose-600/20 border-rose-600/50 text-rose-400" : "bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500"}`}
                   title={inWatchlist ? "Remove from Watchlist" : "Add to Watchlist"}
                 >
                   {inWatchlist ? <Check className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
@@ -411,14 +416,14 @@ export default function DetailsModal() {
                 <button
                   onClick={handleFavoriteToggle}
                   disabled={loadingFavorite}
-                  className={`p-2.5 rounded-xl border transition-all ${isFavorite ? "bg-rose-600/20 border-rose-600/50 text-rose-400" : "bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500"}`}
+                  className={`w-10 h-10 flex items-center justify-center rounded-xl border transition-all active:scale-95 duration-150 cursor-pointer flex-shrink-0 ${isFavorite ? "bg-rose-600/20 border-rose-600/50 text-rose-400" : "bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500"}`}
                   title={isFavorite ? "Remove from Favorites" : "Add to Favorites"}
                 >
                   <Heart className={`w-4 h-4 ${isFavorite ? "fill-current" : ""}`} />
                 </button>
                 <button
                   onClick={handleShare}
-                  className="p-2.5 rounded-xl border bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500 transition-all"
+                  className="w-10 h-10 flex items-center justify-center rounded-xl border bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500 transition-all active:scale-95 duration-150 cursor-pointer flex-shrink-0"
                   title="Share"
                 >
                   {copiedLink ? <Check className="w-4 h-4 text-green-400" /> : <Share2 className="w-4 h-4" />}
@@ -672,7 +677,7 @@ export default function DetailsModal() {
                                 {epThumb ? (
                                   <img src={epThumb} alt={epTitle} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                                 ) : (
-                                  <div className="w-full h-full flex items-center justify-center text-zinc-655 bg-zinc-900">
+                                  <div className="w-full h-full flex items-center justify-center text-zinc-600 bg-zinc-900">
                                     <Film className="w-8 h-8 opacity-30" />
                                   </div>
                                 )}

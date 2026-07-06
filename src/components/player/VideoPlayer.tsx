@@ -484,26 +484,29 @@ export default function VideoPlayer({
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="absolute top-0 inset-x-0 z-30 p-6 bg-gradient-to-b from-black/90 to-transparent flex items-center justify-between text-white"
+            className="absolute top-0 inset-x-0 z-30 p-4 sm:p-6 bg-gradient-to-b from-black/90 to-transparent flex items-center justify-between text-white"
           >
             <button
               onClick={() => router.back()}
-              className="flex items-center space-x-2 text-zinc-300 hover:text-white transition-colors cursor-pointer focus:outline-none"
+              className="flex items-center space-x-1 sm:space-x-2 text-zinc-300 hover:text-white transition-colors cursor-pointer focus:outline-none"
             >
-              <ChevronLeft className="h-7 w-7" />
-              <span className="text-sm font-bold tracking-wider">EXIT</span>
+              <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7" />
+              <span className="text-xs sm:text-sm font-black tracking-wider">EXIT</span>
             </button>
 
-            <div className="text-center">
-              <h2 className="text-lg md:text-xl font-bold tracking-tight">
+            <div className="text-center max-w-[50%] min-w-0">
+              <h2 className="text-sm sm:text-base md:text-lg font-black tracking-tight truncate">
                 {title}
               </h2>
               {mediaType === "tv" && (
-                <p className="text-xs text-zinc-400 font-medium mt-0.5">
-                  S{season} : E{currentEpisode}
+                <p className="text-[10px] sm:text-xs text-zinc-400 font-medium mt-0.5">
+                  Season {season} • Episode {currentEpisode}
                 </p>
               )}
             </div>
+
+            {/* Spacer to keep center balanced */}
+            <div className="w-14 sm:w-16" />
           </motion.div>
         )}
       </AnimatePresence>
@@ -526,37 +529,38 @@ export default function VideoPlayer({
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 20 }}
-                className="absolute bottom-6 inset-x-6 z-30 p-4 rounded-2xl bg-zinc-950/90 border border-zinc-800/80 shadow-2xl backdrop-blur flex items-center justify-between text-white"
+                className="absolute bottom-4 inset-x-4 sm:bottom-6 sm:inset-x-6 z-30 p-2.5 sm:p-4 rounded-xl sm:rounded-2xl bg-zinc-950/90 border border-zinc-800/80 shadow-2xl backdrop-blur flex items-center justify-between text-white gap-2"
               >
                 {/* Left: Live status */}
-                <div className="flex items-center space-x-3">
-                  <span className="text-[10px] font-black text-rose-500 uppercase tracking-widest bg-rose-500/10 px-2.5 py-1 rounded-lg border border-rose-500/20">
-                    Live Stream
+                <div className="flex items-center space-x-2 flex-shrink-0">
+                  <span className="flex items-center gap-1.5 text-[9px] sm:text-[10px] font-black text-rose-500 uppercase tracking-widest bg-rose-500/10 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-lg border border-rose-500/20">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                    <span className="hidden xs:inline">Live</span>
                   </span>
-                  <span className="text-xs text-zinc-400 font-bold hidden sm:inline">
+                  <span className="text-[10px] sm:text-xs text-zinc-400 font-bold hidden md:inline">
                     {STREAM_SERVERS.find((s) => s.id === activeServer)?.name}
                   </span>
                 </div>
 
                 {/* Center: TV navigation */}
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-1.5 sm:space-x-2">
                   {mediaType === "tv" && (
                     <>
                       <button
                         onClick={() => setShowEpisodeDrawer(true)}
-                        className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-xs font-bold text-zinc-300 hover:text-white transition-all cursor-pointer hover:bg-zinc-800 focus:outline-none"
+                        className="flex items-center space-x-1 sm:space-x-1.5 h-8 sm:h-9 px-2 sm:px-3 rounded-lg sm:rounded-xl bg-zinc-900 border border-zinc-800 text-[10px] sm:text-xs font-bold text-zinc-300 hover:text-white transition-all cursor-pointer hover:bg-zinc-800 focus:outline-none"
                       >
-                        <Tv className="h-4 w-4" />
+                        <Tv className="h-3.5 w-3.5" />
                         <span>Episodes</span>
                       </button>
 
                       {currentEpisode < episodesList.length && (
                         <button
                           onClick={() => selectEpisode(currentEpisode + 1)}
-                          className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-rose-600 border border-rose-500 text-xs font-bold text-white hover:bg-rose-500 transition-all cursor-pointer shadow-lg shadow-rose-600/20 focus:outline-none"
+                          className="flex items-center space-x-1 sm:space-x-1.5 h-8 sm:h-9 px-2.5 sm:px-3 rounded-lg sm:rounded-xl bg-rose-600 border border-rose-500 text-[10px] sm:text-xs font-bold text-white hover:bg-rose-500 transition-all cursor-pointer shadow-lg shadow-rose-600/20 focus:outline-none"
                         >
-                          <span>Next Episode</span>
-                          <SkipForward className="h-4 w-4" />
+                          <span>Next</span>
+                          <SkipForward className="h-3.5 w-3.5" />
                         </button>
                       )}
                     </>
@@ -564,21 +568,21 @@ export default function VideoPlayer({
                 </div>
 
                 {/* Right: Servers and Fullscreen */}
-                <div className="flex items-center space-x-2.5">
+                <div className="flex items-center space-x-1.5 sm:space-x-2.5 flex-shrink-0">
                   <button
                     onClick={() => setIsFloatingServerOpen(!isFloatingServerOpen)}
-                    className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-xs font-bold text-zinc-300 hover:text-white transition-all cursor-pointer hover:bg-zinc-800 focus:outline-none"
+                    className="flex items-center space-x-1 sm:space-x-1.5 h-8 sm:h-9 px-2 sm:px-3 rounded-lg sm:rounded-xl bg-zinc-900 border border-zinc-800 text-[10px] sm:text-xs font-bold text-zinc-300 hover:text-white transition-all cursor-pointer hover:bg-zinc-800 focus:outline-none"
                   >
-                    <Settings className="h-4 w-4" />
+                    <Settings className="h-3.5 w-3.5" />
                     <span>Servers</span>
                   </button>
 
                   <button
                     onClick={toggleFullscreen}
-                    className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white transition-all cursor-pointer hover:bg-zinc-850 focus:outline-none"
+                    className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg sm:rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white transition-all cursor-pointer hover:bg-zinc-850 focus:outline-none"
                     title="Toggle Fullscreen"
                   >
-                    {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+                    {isFullscreen ? <Minimize className="h-3.5 w-3.5" /> : <Maximize className="h-3.5 w-3.5" />}
                   </button>
                 </div>
               </motion.div>
