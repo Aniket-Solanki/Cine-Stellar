@@ -419,38 +419,14 @@ export default function VideoPlayer({
       onTouchStart={resetTimer}
       className="relative w-screen h-screen bg-black overflow-hidden select-none"
     >
-      {/* Edge Sensors to trigger controls when they are hidden (since iframe intercepts mousemove) */}
+      {/* Full-screen Sensor to trigger controls on hover/touch (since iframe intercepts events when controls are hidden) */}
       {!showControls && (
-        <>
-          {/* Top Sensor */}
-          <div
-            onMouseMove={resetTimer}
-            onMouseEnter={resetTimer}
-            onTouchStart={resetTimer}
-            className="absolute top-0 inset-x-0 h-20 z-40 bg-transparent cursor-pointer"
-          />
-          {/* Bottom Sensor */}
-          <div
-            onMouseMove={resetTimer}
-            onMouseEnter={resetTimer}
-            onTouchStart={resetTimer}
-            className="absolute bottom-0 inset-x-0 h-24 z-40 bg-transparent cursor-pointer"
-          />
-          {/* Left Sensor */}
-          <div
-            onMouseMove={resetTimer}
-            onMouseEnter={resetTimer}
-            onTouchStart={resetTimer}
-            className="absolute inset-y-0 left-0 w-14 z-40 bg-transparent cursor-pointer"
-          />
-          {/* Right Sensor */}
-          <div
-            onMouseMove={resetTimer}
-            onMouseEnter={resetTimer}
-            onTouchStart={resetTimer}
-            className="absolute inset-y-0 right-0 w-14 z-40 bg-transparent cursor-pointer"
-          />
-        </>
+        <div
+          onMouseMove={resetTimer}
+          onClick={resetTimer}
+          onTouchStart={resetTimer}
+          className="absolute inset-0 z-40 bg-transparent cursor-pointer"
+        />
       )}
       {/* Floating server selector on top of iframe (visible on hover/pause) */}
       <AnimatePresence>
