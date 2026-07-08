@@ -1,7 +1,7 @@
 // Premium custom HTML5 Video Player with Netflix styling, custom controls, keyboard shortcuts, skip intro, and episode drawer.
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   Play,
@@ -215,37 +215,30 @@ export default function VideoPlayer({
   const videoSrc = "https://storage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4";
 
   // Auto Hide Controls
-  useEffect(() => {
-    let timeout: NodeJS.Timeout;
-    const resetTimer = () => {
-      setShowControls(true);
-      clearTimeout(timeout);
-      // Auto-hide controls after 3 seconds of inactivity (for both iframe and native)
-      timeout = setTimeout(() => setShowControls(false), 3000);
-    };
-
-    const container = containerRef.current;
-    if (container) {
-      container.addEventListener("mousemove", resetTimer);
-      container.addEventListener("keypress", resetTimer);
-      container.addEventListener("touchstart", resetTimer);
-    }
-
-    return () => {
-      if (container) {
-        container.removeEventListener("mousemove", resetTimer);
-        container.removeEventListener("keypress", resetTimer);
-        container.removeEventListener("touchstart", resetTimer);
-      }
-      clearTimeout(timeout);
-    };
+  const resetTimer = useCallback(() => {
+    setShowControls(true);
   }, []);
+
+  useEffect(() => {
+    if (!showControls) return;
+
+    // Do not auto-hide controls if drawers or menus are active
+    if (showEpisodeDrawer || isFloatingServerOpen || settingsTab !== "main") return;
+
+    const timeout = setTimeout(() => {
+      setShowControls(false);
+    }, 3500);
+
+    return () => clearTimeout(timeout);
+  }, [showControls, showEpisodeDrawer, isFloatingServerOpen, settingsTab]);
 
   // Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Don't trigger if input is focused
       if (document.activeElement?.tagName === "INPUT") return;
+
+      resetTimer();
 
       const video = videoRef.current;
       if (!video) return;
@@ -286,7 +279,7 @@ export default function VideoPlayer({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isFullscreen]);
+  }, [isFullscreen, resetTimer]);
 
   // Sync Video properties
   useEffect(() => {
@@ -421,8 +414,44 @@ export default function VideoPlayer({
   return (
     <div
       ref={containerRef}
+      onMouseMove={resetTimer}
+      onClick={resetTimer}
+      onTouchStart={resetTimer}
       className="relative w-screen h-screen bg-black overflow-hidden select-none"
     >
+      {/* Edge Sensors to trigger controls when they are hidden (since iframe intercepts mousemove) */}
+      {!showControls && (
+        <>
+          {/* Top Sensor */}
+          <div
+            onMouseMove={resetTimer}
+            onMouseEnter={resetTimer}
+            onTouchStart={resetTimer}
+            className="absolute top-0 inset-x-0 h-20 z-40 bg-transparent cursor-pointer"
+          />
+          {/* Bottom Sensor */}
+          <div
+            onMouseMove={resetTimer}
+            onMouseEnter={resetTimer}
+            onTouchStart={resetTimer}
+            className="absolute bottom-0 inset-x-0 h-24 z-40 bg-transparent cursor-pointer"
+          />
+          {/* Left Sensor */}
+          <div
+            onMouseMove={resetTimer}
+            onMouseEnter={resetTimer}
+            onTouchStart={resetTimer}
+            className="absolute inset-y-0 left-0 w-14 z-40 bg-transparent cursor-pointer"
+          />
+          {/* Right Sensor */}
+          <div
+            onMouseMove={resetTimer}
+            onMouseEnter={resetTimer}
+            onTouchStart={resetTimer}
+            className="absolute inset-y-0 right-0 w-14 z-40 bg-transparent cursor-pointer"
+          />
+        </>
+      )}
       {/* Floating server selector on top of iframe (visible on hover/pause) */}
       <AnimatePresence>
         {showControls && (
