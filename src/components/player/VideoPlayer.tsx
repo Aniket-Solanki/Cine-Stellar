@@ -219,6 +219,40 @@ export default function VideoPlayer({
     setShowControls(true);
   }, []);
 
+  const togglePlay = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (isPlaying) {
+      video.pause();
+      setIsPlaying(false);
+    } else {
+      video.play().catch(console.error);
+      setIsPlaying(true);
+    }
+  }, [isPlaying]);
+
+  const toggleMute = useCallback(() => {
+    setIsMuted(!isMuted);
+  }, [isMuted]);
+
+  const toggleFullscreen = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    if (!isFullscreen) {
+      if (container.requestFullscreen) {
+        container.requestFullscreen();
+      }
+      setIsFullscreen(true);
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+      setIsFullscreen(false);
+    }
+  }, [isFullscreen]);
+
   useEffect(() => {
     if (!showControls) return;
 
@@ -279,7 +313,7 @@ export default function VideoPlayer({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isFullscreen, resetTimer]);
+  }, [isFullscreen, resetTimer, togglePlay, toggleFullscreen, toggleMute]);
 
   // Sync Video properties
   useEffect(() => {
@@ -331,19 +365,6 @@ export default function VideoPlayer({
     }
   }, [currentTime]);
 
-  const togglePlay = () => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    if (isPlaying) {
-      video.pause();
-      setIsPlaying(false);
-    } else {
-      video.play().catch(console.error);
-      setIsPlaying(true);
-    }
-  };
-
   const handleTimeUpdate = () => {
     const video = videoRef.current;
     if (video) {
@@ -358,27 +379,6 @@ export default function VideoPlayer({
       const time = parseFloat(e.target.value);
       video.currentTime = time;
       setCurrentTime(time);
-    }
-  };
-
-  const toggleMute = () => {
-    setIsMuted(!isMuted);
-  };
-
-  const toggleFullscreen = () => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    if (!isFullscreen) {
-      if (container.requestFullscreen) {
-        container.requestFullscreen();
-      }
-      setIsFullscreen(true);
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      }
-      setIsFullscreen(false);
     }
   };
 
