@@ -31,23 +31,28 @@ Cine-Stellar is a production-grade, highly optimized OTT streaming platform comp
 ## Installation & Setup
 
 ### 1. Clone & Install Dependencies
+
 Navigate into the workspace and run:
+
 ```bash
 npm install
 ```
 
 ### 2. Configure Environment Variables
+
 Create a `.env` file in the root directory (based on `.env.example`):
+
 ```env
 # TMDB API Configuration (Live Media Metadata)
-TMDB_API_KEY=8088221e5df33c3fa7b69dc0c2219d36
+# Get your API key from https://www.themoviedb.org/settings/api
+TMDB_API_KEY=your_tmdb_api_key_here
 NEXT_PUBLIC_TMDB_IMAGE_BASE_URL=https://image.tmdb.org/t/p
 
 # Database Configuration (Defaults to SQLite for local zero-config, PostgreSQL-ready)
 DATABASE_URL="file:./dev.db"
 
 # Authentication Security Secrets
-JWT_SECRET="cine_stellar_jwt_secret_key_ultra_premium_2026"
+JWT_SECRET="your_jwt_secret_here"
 JWT_EXPIRES_IN="7d"
 
 # App Deployment URLs
@@ -55,15 +60,19 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 ```
 
 ### 3. Sync Database Schema
+
 Sync the Prisma schema to build the local SQLite database cache (`dev.db`):
+
 ```bash
 npx prisma db push
 ```
 
 ### 4. Run Development Server
+
 ```bash
 npm run dev
 ```
+
 Open [http://localhost:3000](http://localhost:3000) with your browser to experience the platform!
 
 ---
@@ -71,12 +80,14 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to experie
 ## Production Build & Vercel Deployment
 
 To verify compilation and test optimization bounds locally:
+
 ```bash
 npm run build
 npm run start
 ```
 
 ### Deploying to Vercel
+
 Cine-Stellar is optimized for Vercel deployment with edge rendering assets:
 
 1. Connect your git repository to Vercel.
@@ -90,8 +101,15 @@ Cine-Stellar is optimized for Vercel deployment with edge rendering assets:
 ## Database Schemas & Models
 
 Defined in [prisma/schema.prisma](prisma/schema.prisma):
+
 - **User**: Name, email, password, role (USER/ADMIN), avatar preset, preferred language, theme.
 - **WatchHistory**: Playback progress tracks in seconds, durations, seasons, episodes, and timestamp markers.
 - **Watchlist**: Adds items to a user's playlist.
 - **Favorite**: Keeps track of Liked content.
 - **Rating**: Stores movie feedback ratings (1-10 stars).
+
+---
+
+## License
+
+MIT
